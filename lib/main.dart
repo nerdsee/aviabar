@@ -45,7 +45,7 @@ class _MyHomePageState extends State<MyHomePage> {
           builder: (context, AsyncSnapshot<AviabarUser> snapshot) {
             if (snapshot.hasData) {
               Navigator.pop(context, snapshot.data);
-              return Text(snapshot.data!.name);
+              return Text("");
             } else {
               return Center(child: CircularProgressIndicator());
             }
@@ -80,7 +80,7 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             if (!user.valid)
-              FloatingActionButton(
+              ElevatedButton(
                 onPressed: () async {
                   AviabarUser? ret = await showDialog<AviabarUser>(
                       context: context, builder: (context) => sd);
@@ -91,7 +91,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     });
                   }
                 },
-                tooltip: 'Login',
                 child: const Icon(Icons.login),
               ),
             if (user.valid) Text(user.name)
