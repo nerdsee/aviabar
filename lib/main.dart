@@ -1,4 +1,5 @@
 import 'package:aviabar/code/backend.dart';
+import 'package:aviabar/list.dart';
 import 'package:flutter/material.dart';
 
 import 'code/user.dart';
@@ -33,7 +34,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   AviabarUser user = AviabarUser();
 
   @override
@@ -89,11 +89,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     setState(() {
                       user = ret;
                     });
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
                   }
                 },
                 child: const Icon(Icons.login),
               ),
-            if (user.valid) Text(user.name)
+            if (user.valid)
+              Text("")
           ],
         ),
       ),
