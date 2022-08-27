@@ -39,15 +39,15 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     SimpleDialog sd = SimpleDialog(
-      title: Text('Show ID Card'),
+      title: const Text('Show ID Card'),
       children: [
         FutureBuilder(
           builder: (context, AsyncSnapshot<AviabarUser> snapshot) {
             if (snapshot.hasData) {
               Navigator.pop(context, snapshot.data);
-              return Text("");
+              return const Text("");
             } else {
-              return Center(child: CircularProgressIndicator());
+              return Center(child: const CircularProgressIndicator());
             }
           },
           future: _login(),

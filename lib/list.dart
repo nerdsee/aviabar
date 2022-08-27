@@ -1,6 +1,9 @@
+import 'package:aviabar/code/backend.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+
+import 'code/user.dart';
 
 class ProductList extends StatefulWidget {
   const ProductList({Key? key}) : super(key: key);
@@ -10,18 +13,14 @@ class ProductList extends StatefulWidget {
 }
 
 class _ProductListState extends State<ProductList> {
-  static final _kActionpaneTypes = <String, Widget>{
-    'DrawerMotion': DrawerMotion(),
-    'BehindMotion': BehindMotion(),
-    'ScrollMotion': ScrollMotion(),
-    'StretchMotion': StretchMotion(),
-  };
   late List<Slidable> _items;
+  late final mainActions;
+  late final secondaryActions;
 
   @override
   void initState() {
     super.initState();
-    final mainActions = <Widget>[
+    mainActions = <Widget>[
       SlidableAction(
         label: 'Buy',
         foregroundColor: Colors.green,
@@ -29,7 +28,7 @@ class _ProductListState extends State<ProductList> {
         onPressed: (_) => _showSnackBar('Archive'),
       ),
     ];
-    final secondaryActions = <Widget>[
+    secondaryActions = <Widget>[
       SlidableAction(
         label: 'Buy',
         foregroundColor: Colors.green,
@@ -37,97 +36,103 @@ class _ProductListState extends State<ProductList> {
         onPressed: (_) => _showSnackBar('More'),
       ),
     ];
-    _items = [
-      for (final entry in _kActionpaneTypes.entries)
-        Slidable(
-          key: ValueKey(entry.key),
-          // swipe right
-          startActionPane: ActionPane(
-            motion: entry.value,
-            extentRatio: 0.2,
-            children: mainActions,
-          ),
-          //swipe left
-          endActionPane: ActionPane(
-            motion: entry.value,
-            extentRatio: 0.2,
-            children: secondaryActions,
-          ),
-          child: ListTile(
-            leading: ExtendedImage.network(
-              'https://www.fritz-kola-shop.com/media/webp_image/catalog/product/cache/1ab04fefefa1d95048e1215eaefb4050/f/r/fritz-kola_fritz-limo_honigmelone_033.webp',
-              // cache: true, (by default caches image)
-              shape: BoxShape.rectangle,
-              width: 40,
-              height: 40,
-              borderRadius: const BorderRadius.all(Radius.circular(3.0)),
-            ),
-            title: Text('ListTile with ${entry.key}'),
-            subtitle: const Text('Swipe left and right to see the actions'),
-          ),
-        ),
-    ];
-    // Dismissible tile example:
-    // First create a dismissal obj
-    final dismissal = DismissiblePane(
-      onDismissed: () {
-        _showSnackBar('Dismiss Archive');
-        setState(() => this._items.removeAt(_items.length - 1));
-      },
-      // Confirm on dismissal:
-      confirmDismiss: () async {
-        final bool? ret = await showDialog<bool>(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: Text('Archive'),
-              content: const Text('Confirm action?'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('Ok'),
-                ),
-              ],
-            );
-          },
-        );
-        return ret ?? false;
-      },
-    );
+
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text("AVIABAR"),
-          actions: [
-            if (true)
-              Padding(
-                  padding: EdgeInsets.only(right: 20.0),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        Navigator.pop(context);
-                      });
-                    },
-                    child: Icon(
-                      Icons.logout,
-                      size: 26.0,
-                    ),
-                  )),
-          ],
-        ),
-        body: ListView(children: _items));
+      appBar: AppBar(
+        title: const Text("AVIABAR"),
+        actions: [
+          if (true)
+            Padding(
+                padding: const EdgeInsets.only(right: 20.0),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      Navigator.pop(context);
+                    });
+                  },
+                  child: const Icon(
+                    Icons.logout,
+                    size: 26.0,
+                  ),
+                )),
+        ],
+      ),
+      body:
+      FutureBuilder(
+        builder: (context, AsyncSnapshot<List<AviabarProduct>> snapshot) {
+          if (snapshot.hasData) {
+            return ListView(children: [...getItemList(snapshot.data)]);
+          } else {
+          return Center(child: const CircularProgressIndicator());
+          }
+        },
+        future: AviabarBackend().getProducts(),
+      ),
+
+    );
+  }
+
+  List<Widget> getItemList(List<AviabarProduct>? products) {
+    List<Widget> itemlist = [];
+    print("get items.");
+    if (products != null) {
+      int n = products.length;
+      print("number of items $n");
+      itemlist = [
+        for (final product in products)
+          Slidable(
+            key: ValueKey(product.id),
+            // swipe right
+            startActionPane: ActionPane(
+              motion: const DrawerMotion(),
+              extentRatio: 0.2,
+              children: [
+                SlidableAction(
+                  label: 'Buy',
+                  foregroundColor: Colors.green,
+                  icon: Icons.shopping_basket,
+                  onPressed: (_) => _showSnackBar('Buy ${product.id}'),
+                ),
+              ],
+            ),
+            //swipe left
+            endActionPane: ActionPane(
+              motion: const DrawerMotion(),
+              extentRatio: 0.2,
+              children: [
+                SlidableAction(
+                  label: 'Buy',
+                  foregroundColor: Colors.green,
+                  icon: Icons.shopping_basket,
+                  onPressed: (_) => _showSnackBar('Buy ${product.id}'),
+                ),
+              ],
+            ),
+            child: ListTile(
+              leading: ExtendedImage.network(
+                'https://www.notonto.de/aviabar/${product.logo}',
+                // cache: true, (by default caches image)
+                shape: BoxShape.rectangle,
+                width: 40,
+                height: 40,
+                borderRadius: const BorderRadius.all(Radius.circular(3.0)),
+              ),
+              title: Text(product.name),
+              subtitle: const Text('Swipe left and right to see the actions'),
+            ),
+          ),
+      ];
+    }
+    return itemlist;
   }
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(content: Text(message), duration: Duration(seconds: 1),),
     );
   }
 }
