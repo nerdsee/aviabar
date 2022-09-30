@@ -3,6 +3,7 @@ import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
+import 'code/product.dart';
 import 'code/user.dart';
 
 class ProductList extends StatefulWidget {
@@ -16,28 +17,6 @@ class _ProductListState extends State<ProductList> {
   late List<Slidable> _items;
   late final mainActions;
   late final secondaryActions;
-
-  @override
-  void initState() {
-    super.initState();
-    mainActions = <Widget>[
-      SlidableAction(
-        label: 'Buy',
-        foregroundColor: Colors.green,
-        icon: Icons.shopping_basket,
-        onPressed: (_) => _showSnackBar('Archive'),
-      ),
-    ];
-    secondaryActions = <Widget>[
-      SlidableAction(
-        label: 'Buy',
-        foregroundColor: Colors.green,
-        icon: Icons.shopping_basket,
-        onPressed: (_) => _showSnackBar('More'),
-      ),
-    ];
-
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,18 +40,16 @@ class _ProductListState extends State<ProductList> {
                 )),
         ],
       ),
-      body:
-      FutureBuilder(
+      body: FutureBuilder(
         builder: (context, AsyncSnapshot<List<AviabarProduct>> snapshot) {
           if (snapshot.hasData) {
             return ListView(children: [...getItemList(snapshot.data)]);
           } else {
-          return Center(child: const CircularProgressIndicator());
+            return Center(child: const CircularProgressIndicator());
           }
         },
-        future: AviabarBackend().getProducts(),
+        future: AviabarBackend().fAviabarProducts,
       ),
-
     );
   }
 
@@ -95,7 +72,7 @@ class _ProductListState extends State<ProductList> {
                   label: 'Buy',
                   foregroundColor: Colors.green,
                   icon: Icons.shopping_basket,
-                  onPressed: (_) => _showSnackBar('Buy ${product.id}'),
+                  onPressed: (_) => _buy(product),
                 ),
               ],
             ),
@@ -108,13 +85,13 @@ class _ProductListState extends State<ProductList> {
                   label: 'Buy',
                   foregroundColor: Colors.green,
                   icon: Icons.shopping_basket,
-                  onPressed: (_) => _showSnackBar('Buy ${product.id}'),
+                  onPressed: (_) => _buy(product),
                 ),
               ],
             ),
             child: ListTile(
               leading: ExtendedImage.network(
-                'https://www.notonto.de/aviabar/${product.logo}',
+                '${AviabarBackend().serverRoot}/logos/${product.logo}',
                 // cache: true, (by default caches image)
                 shape: BoxShape.rectangle,
                 width: 40,
@@ -130,9 +107,8 @@ class _ProductListState extends State<ProductList> {
     return itemlist;
   }
 
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), duration: Duration(seconds: 1),),
-    );
+  void _buy(AviabarProduct product) {
+    AviabarBackend().doBuy(product, context);
   }
+
 }

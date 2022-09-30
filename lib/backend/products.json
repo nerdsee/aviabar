@@ -1,0 +1,29 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Fritz Kola",
+      "price": 1.0,
+      "logo": "fritz_black.png"
+    },
+    {
+      "id": 2,
+      "name": "Fritz Kola zuckerfrei",
+      "price": 1.0,
+      "logo": "fritz_white.png"
+    },
+    {
+      "id": 3,
+      "name": "Fritz MischMasch",
+      "price": 1.0,
+      "logo": "fritz_yellow.png"
+    },
+    {
+      "id": 4,
+      "name": "Krombacher Alkoholfrei",
+      "price": 1.0,
+      "logo": "krombacher_af.png"
+    }
+  ]
+}
+
