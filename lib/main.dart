@@ -1,5 +1,6 @@
 import 'package:aviabar/code/backend.dart';
 import 'package:aviabar/list.dart';
+import 'package:aviabar/welcome.dart';
 import 'package:flutter/material.dart';
 
 import 'code/user.dart';
@@ -34,38 +35,21 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  AviabarUser user = AviabarUser();
+  AviabarUser user = AviabarUser.empty();
 
   @override
   Widget build(BuildContext context) {
-    SimpleDialog sd = SimpleDialog(
-      title: const Text('Show ID Card'),
-      children: [
-        FutureBuilder(
-          builder: (context, AsyncSnapshot<AviabarUser> snapshot) {
-            if (snapshot.hasData) {
-              Navigator.pop(context, snapshot.data);
-              return const Text("");
-            } else {
-              return Center(child: const CircularProgressIndicator());
-            }
-          },
-          future: _login(),
-        ),
-      ],
-    );
-
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
-          if (user.valid)
+          if (user.isValid)
             Padding(
                 padding: EdgeInsets.only(right: 20.0),
                 child: GestureDetector(
                   onTap: () {
                     setState(() {
-                      user = AviabarUser();
+                      user = AviabarUser.empty();
                     });
                   },
                   child: Icon(
@@ -79,31 +63,55 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            if (!user.valid)
+            if (!user.isValid)
               ElevatedButton(
-                onPressed: () async {
-                  AviabarUser? ret = await showDialog<AviabarUser>(
-                      context: context, builder: (context) => sd);
-                  print(ret?.name);
-                  if (ret != null) {
-                    setState(() {
-                      user = ret;
-                    });
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
-                  }
-                },
+                onPressed: readCardDialog,
                 child: const Icon(Icons.login),
               ),
-            if (user.valid)
-              Text("")
+            if (user.isValid) Text("")
           ],
         ),
       ),
     );
   }
 
-  Future<AviabarUser> _login() async {
-    AviabarUser user = await AviabarBackend().getUser();
+  void readCardDialog() async {
+
+    SimpleDialog cardReaderDialog = SimpleDialog(
+      title: const Text('Show ID Card'),
+      children: [
+        FutureBuilder(
+          builder: (context, AsyncSnapshot<AviabarUser> snapshot) {
+            if (snapshot.hasData) {
+              Navigator.pop(context, snapshot.data);
+              return const Text("");
+            } else {
+              return Center(child: const CircularProgressIndicator());
+            }
+          },
+          future: _readCard(),
+        ),
+      ],
+    );
+
+    AviabarUser? ret = await showDialog<AviabarUser>(context: context, builder: (context) => cardReaderDialog);
+    print(ret?.name);
+    if (ret != null) {
+      setState(() {
+        user = ret;
+      });
+      if (ret.isRegistered) {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
+      } else {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const WelcomePage()));
+      }
+    }
+  }
+
+  Future<AviabarUser> _readCard() async {
+    String cardId = "12345";
+
+    Future<AviabarUser> user = AviabarBackend().getUser(cardId);
 
     return user;
   }

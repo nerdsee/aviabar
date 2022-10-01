@@ -6,9 +6,7 @@ import 'package:aviabar/code/user.dart';
 import 'product.dart';
 
 class AviabarBackend {
-
   AviabarBackend._privateConstructor() {
-
     serverRoot = "http://192.168.1.148:8080";
 
     fAviabarProducts = getProducts();
@@ -27,10 +25,24 @@ class AviabarBackend {
 
   void getIDCard() {}
 
-  Future<AviabarUser> getUser() async {
-    AviabarUser user = AviabarUser.stoeve();
+  Future<AviabarUser> getUser(cardId) async {
+    http.Response response = await http.get(Uri.parse('${serverRoot}/card/${cardId}'));
+
+    AviabarUser user;
+
+    if (response.statusCode == 200) {
+      var jsonUser = jsonDecode(response.body);
+
+      print("Read JSON: $jsonUser");
+
+      user = AviabarUser.fromJson(jsonUser);
+      print("P2 $user");
+    } else {
+      throw Exception('Failed to load user');
+    }
+
     currentUser = user;
-    return Future.delayed(Duration(seconds: 4), () => user);
+    return user;
   }
 
   AviabarUser? getCurrentUser() {
@@ -38,8 +50,7 @@ class AviabarBackend {
   }
 
   Future<List<AviabarProduct>> getProducts() async {
-    http.Response response = await http
-        .get(Uri.parse('${serverRoot}/products'));
+    http.Response response = await http.get(Uri.parse('${serverRoot}/products'));
 
     if (response.statusCode == 200) {
       var jsonProductList = jsonDecode(response.body);
@@ -60,12 +71,28 @@ class AviabarBackend {
     return aviabarProducts;
   }
 
+  Future<void> buyProduct(AviabarUser user, AviabarProduct product) async {
+    http.Response response = await http.get(Uri.parse('${serverRoot}/order/${user.id}/${product.id}'));
+
+    if (response.statusCode == 200) {
+      var jsonProductList = jsonDecode(response.body);
+
+      print("Read JSON: $jsonProductList");
+      // print(jsonProductList["products"]);
+
+    } else {
+      throw Exception('Failed to load album');
+    }
+
+    return;
+  }
+
   void doBuy(AviabarProduct product, BuildContext context) {
     AviabarUser? currentUser = AviabarBackend().currentUser;
     String message = '';
     if (currentUser != null) {
-      message =
-      'Buy ${product.name} ${product.id} ${AviabarBackend().currentUser?.name}';
+      buyProduct(currentUser, product);
+      message = 'Buy ${product.name} ${product.id} ${currentUser.name}';
     } else {
       message = 'No Current User';
     }
@@ -78,5 +105,4 @@ class AviabarBackend {
       ),
     );
   }
-
 }

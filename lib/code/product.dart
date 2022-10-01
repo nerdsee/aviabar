@@ -12,7 +12,7 @@ class AviabarProduct {
   AviabarProduct(this.id, this.name, this.price, this.logo);
 
   factory AviabarProduct.fromJson(Map<String, dynamic> json) {
-    var ap = AviabarProduct(1, json['name'], json['price'], json['logo']);
+    var ap = AviabarProduct(json['id'], json['name'], json['price'], json['logo']);
     return ap;
   }
 }
