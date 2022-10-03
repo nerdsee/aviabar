@@ -2,6 +2,7 @@ import 'package:aviabar/code/backend.dart';
 import 'package:aviabar/list.dart';
 import 'package:aviabar/welcome.dart';
 import 'package:flutter/material.dart';
+import 'package:nfc_manager/nfc_manager.dart';
 
 import 'code/user.dart';
 
@@ -37,6 +38,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   AviabarUser user = AviabarUser.empty();
 
+  bool simCard = true;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,7 +71,17 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: readCardDialog,
                 child: const Icon(Icons.login),
               ),
-            if (user.isValid) Text("")
+            if (user.isValid) Text(""),
+            Switch(
+                // This bool value toggles the switch.
+                value: simCard,
+                activeColor: Colors.red,
+                onChanged: (bool value) {
+                  // This is called when the user toggles the switch.
+                  setState(() {
+                    simCard = value;
+                  });
+                })
           ],
         ),
       ),
@@ -77,42 +90,66 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void readCardDialog() async {
 
-    SimpleDialog cardReaderDialog = SimpleDialog(
-      title: const Text('Show ID Card'),
-      children: [
-        FutureBuilder(
-          builder: (context, AsyncSnapshot<AviabarUser> snapshot) {
-            if (snapshot.hasData) {
-              Navigator.pop(context, snapshot.data);
-              return const Text("");
-            } else {
-              return Center(child: const CircularProgressIndicator());
-            }
-          },
-          future: _readCard(),
-        ),
-      ],
-    );
-
-    AviabarUser? ret = await showDialog<AviabarUser>(context: context, builder: (context) => cardReaderDialog);
-    print(ret?.name);
-    if (ret != null) {
-      setState(() {
-        user = ret;
-      });
-      if (ret.isRegistered) {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
-      } else {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const WelcomePage()));
+    try {
+      AviabarUser? ret = await _readCard();
+      print(ret?.name);
+      if (ret != null) {
+        setState(() {
+          user = ret;
+        });
+        if (ret.isRegistered) {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const ProductList()));
+        } else {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const WelcomePage()));
+        }
       }
+    }
+    on NfcException catch (e) {
+      AviabarBackend().snackMessage(context, e.message, Colors.red, 2);
     }
   }
 
   Future<AviabarUser> _readCard() async {
     String cardId = "12345";
 
+    if (simCard) {
+      cardId = "12345";
+      print("Sim. user 12345");
+    } else {
+      print("read card");
+      Future<String> cardId = readNFC();
+    }
+
     Future<AviabarUser> user = AviabarBackend().getUser(cardId);
 
     return user;
   }
+
+  Future<String> readNFC() async {
+    ValueNotifier<dynamic> result = ValueNotifier(null);
+
+    bool isAvailable = await NfcManager.instance.isAvailable();
+    // Start Session
+    if (isAvailable) {
+
+      print("nfc: " + NfcManager.instance.toString());
+
+      NfcManager.instance.startSession(onDiscovered: (NfcTag tag) async {
+        result.value = tag.data;
+        NfcManager.instance.stopSession();
+      },onError: (NfcError error) async {
+        print("NFC ERROR: ${error.message} ${error.details}");
+        throw NfcException(error.message);
+      } );
+    }
+
+    return "7890";
+  }
+}
+
+class NfcException implements Exception {
+  NfcException(this.message);
+  String message;
 }
