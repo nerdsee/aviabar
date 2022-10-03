@@ -26,17 +26,18 @@ class AviabarBackend {
   void getIDCard() {}
 
   Future<AviabarUser> getUser(cardId) async {
-    http.Response response = await http.get(Uri.parse('${serverRoot}/card/${cardId}'));
+    http.Response response =
+        await http.get(Uri.parse('${serverRoot}/card/${cardId}'));
 
     AviabarUser user;
 
     if (response.statusCode == 200) {
       var jsonUser = jsonDecode(response.body);
 
-      print("Read JSON: $jsonUser");
+      // print("Read JSON: $jsonUser");
 
       user = AviabarUser.fromJson(jsonUser);
-      print("P2 $user");
+      // print("P2 $user");
     } else {
       throw Exception('Failed to load user');
     }
@@ -50,16 +51,15 @@ class AviabarBackend {
   }
 
   Future<List<AviabarProduct>> getProducts() async {
-    http.Response response = await http.get(Uri.parse('${serverRoot}/products'));
+    http.Response response =
+        await http.get(Uri.parse('${serverRoot}/products'));
 
     if (response.statusCode == 200) {
       var jsonProductList = jsonDecode(response.body);
 
-      print("Read JSON: $jsonProductList");
-      // print(jsonProductList["products"]);
+      // print("Read JSON: $jsonProductList");
 
       var p2 = List.from(jsonProductList);
-      print("P2 $p2");
 
       p2.forEach((element) {
         aviabarProducts.add(AviabarProduct.fromJson(element));
@@ -72,7 +72,8 @@ class AviabarBackend {
   }
 
   Future<void> buyProduct(AviabarUser user, AviabarProduct product) async {
-    http.Response response = await http.get(Uri.parse('${serverRoot}/order/${user.id}/${product.id}'));
+    http.Response response = await http
+        .get(Uri.parse('${serverRoot}/order/${user.id}/${product.id}'));
 
     if (response.statusCode == 200) {
       var jsonProductList = jsonDecode(response.body);
@@ -97,11 +98,25 @@ class AviabarBackend {
       message = 'No Current User';
     }
 
+    snackMessage(context, message, Colors.green, 1);
+
+/*
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: Colors.green,
         duration: Duration(seconds: 1),
+      ),
+    );
+*/
+  }
+
+  void snackMessage(BuildContext context, String message, MaterialColor color, int seconds) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        duration: Duration(seconds: seconds),
       ),
     );
   }
