@@ -1,8 +1,12 @@
+import 'dart:collection';
+import 'dart:typed_data';
+
 import 'package:aviabar/code/backend.dart';
 import 'package:aviabar/list.dart';
 import 'package:aviabar/welcome.dart';
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
+import 'package:nfc_manager/platform_tags.dart';
 
 import 'code/user.dart';
 
@@ -68,7 +72,7 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             if (!user.isValid)
               ElevatedButton(
-                onPressed: readCardDialog,
+                onPressed: _login,
                 child: const Icon(Icons.login),
               ),
             if (user.isValid) Text(""),
@@ -88,16 +92,28 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void readCardDialog() async {
+  void _login() async {
 
-    try {
-      AviabarUser? ret = await _readCard();
-      print(ret?.name);
-      if (ret != null) {
+      if (simCard) {
+        print("Sim. user 12345");
+        String cardId = "12345";
+        _handleCard(cardId);
+      } else {
+        readNFC();
+      }
+  }
+
+  Future<void> _handleCard(String? cardId) async {
+
+    if (cardId != null) {
+      AviabarUser user = await AviabarBackend().getUser(cardId);
+
+      print(user.name);
+      if (user != null) {
         setState(() {
-          user = ret;
+          user = user;
         });
-        if (ret.isRegistered) {
+        if (user.isRegistered) {
           Navigator.push(context,
               MaterialPageRoute(builder: (context) => const ProductList()));
         } else {
@@ -106,50 +122,58 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       }
     }
-    on NfcException catch (e) {
-      AviabarBackend().snackMessage(context, e.message, Colors.red, 2);
-    }
+    return;
   }
 
-  Future<AviabarUser> _readCard() async {
-    String cardId = "12345";
-
-    if (simCard) {
-      cardId = "12345";
-      print("Sim. user 12345");
-    } else {
-      print("read card");
-      Future<String> cardId = readNFC();
-    }
-
-    Future<AviabarUser> user = AviabarBackend().getUser(cardId);
-
-    return user;
-  }
-
-  Future<String> readNFC() async {
-    ValueNotifier<dynamic> result = ValueNotifier(null);
+  Future<void> readNFC() async {
 
     bool isAvailable = await NfcManager.instance.isAvailable();
     // Start Session
     if (isAvailable) {
-
       print("nfc: " + NfcManager.instance.toString());
 
       NfcManager.instance.startSession(onDiscovered: (NfcTag tag) async {
-        result.value = tag.data;
         NfcManager.instance.stopSession();
-      },onError: (NfcError error) async {
-        print("NFC ERROR: ${error.message} ${error.details}");
-        throw NfcException(error.message);
-      } );
+        handleTag(tag);
+      }, onError: (NfcError error) async {
+        String msg = "NFC ERROR: (${error.type}) ${error.message} ${error.details}";
+        print(msg);
+        AviabarBackend().snackMessage(context, msg, Colors.red, 2);
+      });
     }
 
-    return "7890";
+    return;
+  }
+
+  void handleTag(NfcTag tag) {
+    String? cardId = null;
+
+    Map<String, dynamic> data = tag.data;
+
+    print("Available keys: ${data.keys.toString()}");
+
+    Iso7816? iso = Iso7816.from(tag);
+
+    if (iso != null) {
+      cardId="";
+      var id = iso.identifier;
+      Uint8List data8 = new Uint8List.fromList(id);
+      for (int i in data8) {
+        cardId = "${cardId}${i.toRadixString(16)}";
+      }
+      print("Found CardId: ${cardId}");
+    } else {
+      String msg = "Unsupported Cars: ${data.keys.toString()}";
+      AviabarBackend().snackMessage(context, msg, Colors.red, 2);
+    }
+
+    _handleCard(cardId);
   }
 }
 
+
 class NfcException implements Exception {
   NfcException(this.message);
+
   String message;
 }
