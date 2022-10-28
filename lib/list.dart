@@ -23,22 +23,6 @@ class _ProductListState extends State<ProductList> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("AVIABAR"),
-        actions: [
-          if (true)
-            Padding(
-                padding: const EdgeInsets.only(right: 20.0),
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      Navigator.pop(context);
-                    });
-                  },
-                  child: const Icon(
-                    Icons.logout,
-                    size: 26.0,
-                  ),
-                )),
-        ],
       ),
       body: FutureBuilder(
         builder: (context, AsyncSnapshot<List<AviabarProduct>> snapshot) {

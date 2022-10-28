@@ -7,6 +7,7 @@ import 'package:aviabar/welcome.dart';
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:nfc_manager/platform_tags.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'code/user.dart';
 
@@ -44,8 +45,27 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool simCard = true;
 
+  Future<void> loadUserFromPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final cardId = prefs.getString('aviabar_cardid') ?? "";
+
+    print("Found Card: ${cardId}");
+
+    if (cardId != "") {
+      _handleCard(cardId);
+    }
+  }
+
+  Future<void> removeUserFromPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.remove('aviabar_cardid');
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (!user.isValid) loadUserFromPreferences();
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -55,6 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 padding: EdgeInsets.only(right: 20.0),
                 child: GestureDetector(
                   onTap: () {
+                    removeUserFromPreferences();
                     setState(() {
                       user = AviabarUser.empty();
                     });
@@ -71,11 +92,43 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             if (!user.isValid)
+              Container(
+                  height: 50,
+                  width: 200,
+                  alignment: Alignment.center,
+                  child: Text(
+                    "",
+                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.cyan[300]),
+                  )),
+            if (!user.isValid)
               ElevatedButton(
                 onPressed: _login,
-                child: const Icon(Icons.login),
+                style: ElevatedButton.styleFrom(
+                  fixedSize: const Size(200, 200),
+                  shape: const CircleBorder(),
+                  primary: Colors.cyan[300],
+                ),
+                child: Text("Login", style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
               ),
-            if (user.isValid) Text(""),
+            if (user.isValid)
+              Container(
+                  height: 50,
+                  width: 200,
+                  alignment: Alignment.center,
+                  child: Text(
+                    "Hello, ${user.name}",
+                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.cyan[900]),
+                  )),
+            if (user.isValid)
+              ElevatedButton(
+                onPressed: _order,
+                style: ElevatedButton.styleFrom(
+                    fixedSize: const Size(200, 200), shape: const CircleBorder(), primary: Colors.cyan[900]),
+                child: Text(
+                  "Order",
+                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                ),
+              ),
             Switch(
                 // This bool value toggles the switch.
                 value: simCard,
@@ -93,40 +146,44 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _login() async {
-
-      if (simCard) {
-        print("Sim. user 12345");
-        String cardId = "12345";
-        _handleCard(cardId);
-      } else {
-        readNFC();
-      }
+    if (simCard) {
+      print("Sim. user 12345");
+      String cardId = "12345";
+      _handleCard(cardId);
+    } else {
+      readNFC();
+    }
   }
 
   Future<void> _handleCard(String? cardId) async {
-
     if (cardId != null) {
-      AviabarUser user = await AviabarBackend().getUser(cardId);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('aviabar_cardid', cardId);
 
-      print(user.name);
-      if (user != null) {
+      AviabarUser newuser = await AviabarBackend().getUser(cardId);
+
+      print(newuser.name);
+      if (newuser != null) {
         setState(() {
-          user = user;
+          user = newuser;
         });
-        if (user.isRegistered) {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => const ProductList()));
-        } else {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => const WelcomePage()));
-        }
+      }
+    }
+    return;
+  }
+
+  Future<void> _order() async {
+    if (user != null) {
+      if (user.isRegistered) {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
+      } else {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => const WelcomePage()));
       }
     }
     return;
   }
 
   Future<void> readNFC() async {
-
     bool isAvailable = await NfcManager.instance.isAvailable();
     // Start Session
     if (isAvailable) {
@@ -155,7 +212,7 @@ class _MyHomePageState extends State<MyHomePage> {
     Iso7816? iso = Iso7816.from(tag);
 
     if (iso != null) {
-      cardId="";
+      cardId = "";
       var id = iso.identifier;
       Uint8List data8 = new Uint8List.fromList(id);
       for (int i in data8) {
@@ -170,7 +227,6 @@ class _MyHomePageState extends State<MyHomePage> {
     _handleCard(cardId);
   }
 }
-
 
 class NfcException implements Exception {
   NfcException(this.message);
