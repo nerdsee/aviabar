@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:aviabar/code/user.dart';
+import 'order.dart';
 import 'product.dart';
 
 class AviabarBackend {
@@ -15,6 +17,7 @@ class AviabarBackend {
   static final AviabarBackend _instance = AviabarBackend._privateConstructor();
   String serverRoot = "";
   AviabarUser? currentUser = null;
+  bool isServerAvailable = false;
 
   factory AviabarBackend() {
     return _instance;
@@ -26,8 +29,7 @@ class AviabarBackend {
   void getIDCard() {}
 
   Future<AviabarUser> getUser(cardId) async {
-    http.Response response =
-        await http.get(Uri.parse('${serverRoot}/card/${cardId}'));
+    http.Response response = await http.get(Uri.parse('${serverRoot}/card/${cardId}'));
 
     AviabarUser user;
 
@@ -51,8 +53,7 @@ class AviabarBackend {
   }
 
   Future<List<AviabarProduct>> getProducts() async {
-    http.Response response =
-        await http.get(Uri.parse('${serverRoot}/products'));
+    http.Response response = await http.get(Uri.parse('${serverRoot}/products'));
 
     if (response.statusCode == 200) {
       var jsonProductList = jsonDecode(response.body);
@@ -71,9 +72,38 @@ class AviabarBackend {
     return aviabarProducts;
   }
 
+  Future<List<AviabarOrder>> getOrders() async {
+
+    List<AviabarOrder> aviabarOrders = [];
+
+    if (currentUser != null) {
+      http.Response response = await http.get(Uri.parse('${serverRoot}/orders/${currentUser?.id}'));
+
+      if (response.statusCode == 200) {
+        var jsonOrderList = jsonDecode(response.body);
+
+        print("Read JSON: $jsonOrderList");
+
+        var p2 = List.from(jsonOrderList);
+
+        print("P2: $p2");
+
+        p2.forEach((element) {
+          print("Element: ${element}");
+          aviabarOrders.add(AviabarOrder.fromJson(element));
+        });
+
+        print("Orders: ${aviabarOrders.length}");
+
+      } else {
+        throw Exception('Failed to load orders');
+      }
+    }
+    return aviabarOrders;
+  }
+
   Future<void> buyProduct(AviabarUser user, AviabarProduct product) async {
-    http.Response response = await http
-        .get(Uri.parse('${serverRoot}/order/${user.id}/${product.id}'));
+    http.Response response = await http.get(Uri.parse('${serverRoot}/order/${user.id}/${product.id}'));
 
     if (response.statusCode == 200) {
       var jsonProductList = jsonDecode(response.body);
@@ -99,16 +129,24 @@ class AviabarBackend {
     }
 
     snackMessage(context, message, Colors.green, 1);
+  }
 
-/*
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 1),
-      ),
-    );
-*/
+  Future<void> checkServerAvailability() async {
+    print("Check server availability");
+    final client = new HttpClient();
+    client.connectionTimeout = const Duration(seconds: 5);
+    Future<http.Response> response = http.get(Uri.parse('${serverRoot}/products'));
+    response.then(serverFound).catchError((error, stackTrace) => serverTimeout).timeout(const Duration(seconds: 10));
+    return;
+  }
+
+  void serverFound(http.Response response) {
+    print("response available: ${response.statusCode}");
+    if (response.statusCode == 200) {
+      isServerAvailable = true;
+    } else {
+      throw Exception('Server returns status code (${response.statusCode}).');
+    }
   }
 
   void snackMessage(BuildContext context, String message, MaterialColor color, int seconds) {
@@ -119,5 +157,9 @@ class AviabarBackend {
         duration: Duration(seconds: seconds),
       ),
     );
+  }
+
+  serverTimeout(error, stackTrace) {
+    print("ERROR: ${error}");
   }
 }
