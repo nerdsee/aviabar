@@ -1,6 +1,6 @@
 class AviabarUser {
   String name = "leer";
-  int id = 0;
+  late final int id;
   double balance=0;
   String cardId = "";
   bool isRegistered = false;
