@@ -16,7 +16,7 @@ class AviabarBackend {
 
   static final AviabarBackend _instance = AviabarBackend._privateConstructor();
   String serverRoot = "";
-  AviabarUser? currentUser = null;
+  AviabarUser currentUser = AviabarUser.empty();
   bool isServerAvailable = false;
 
   factory AviabarBackend() {
@@ -36,7 +36,7 @@ class AviabarBackend {
     if (response.statusCode == 200) {
       var jsonUser = jsonDecode(response.body);
 
-      // print("Read JSON: $jsonUser");
+      print("Read JSON: $jsonUser");
 
       user = AviabarUser.fromJson(jsonUser);
       // print("P2 $user");
@@ -46,6 +46,23 @@ class AviabarBackend {
 
     currentUser = user;
     return user;
+  }
+
+  Future<AviabarUser> saveUserPreferences(String username, String email) async {
+    print("Store Preferences (${currentUser.id}): $username");
+    http.Response response = await http.put(Uri.parse('${serverRoot}/user/${currentUser.id}/$username'));
+
+    if (response.statusCode == 200) {
+      var jsonUser = jsonDecode(response.body);
+
+      print("Read JSON: $jsonUser");
+
+      currentUser = AviabarUser.fromJson(jsonUser);
+      // print("P2 $user");
+    } else {
+      throw Exception('Failed to load user (${response.statusCode})');
+    }
+    return currentUser;
   }
 
   AviabarUser? getCurrentUser() {
@@ -73,11 +90,10 @@ class AviabarBackend {
   }
 
   Future<List<AviabarOrder>> getOrders() async {
-
     List<AviabarOrder> aviabarOrders = [];
 
     if (currentUser != null) {
-      http.Response response = await http.get(Uri.parse('${serverRoot}/orders/${currentUser?.id}'));
+      http.Response response = await http.get(Uri.parse('${serverRoot}/orders/${currentUser.id}'));
 
       if (response.statusCode == 200) {
         var jsonOrderList = jsonDecode(response.body);
@@ -94,7 +110,6 @@ class AviabarBackend {
         });
 
         print("Orders: ${aviabarOrders.length}");
-
       } else {
         throw Exception('Failed to load orders');
       }
@@ -161,5 +176,9 @@ class AviabarBackend {
 
   serverTimeout(error, stackTrace) {
     print("ERROR: ${error}");
+  }
+
+  void logout() {
+    currentUser = AviabarUser.empty();
   }
 }

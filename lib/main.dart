@@ -44,12 +44,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  AviabarUser user = AviabarUser.empty();
-
   bool simCard = true;
   bool showServerError = false;
 
-  serverStateChecked(void v) {
+  serverStateChecked() {
     print("server state checked.");
     setState(() {
       if (!AviabarBackend().isServerAvailable) {
@@ -72,13 +70,17 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void checkServer() {
-    AviabarBackend().checkServerAvailability().then(serverStateChecked);
+    AviabarBackend().checkServerAvailability();
+    Future.delayed(Duration(seconds: 10), serverStateChecked);
   }
 
   @override
   Widget build(BuildContext context) {
     print("Backend is available ${AviabarBackend().isServerAvailable}");
     print("Error is visible ${showServerError}");
+
+    AviabarUser user = AviabarBackend().currentUser;
+    print("User ${user}");
 
     if (!user.isValid) loadUserFromPreferences();
 
@@ -108,6 +110,18 @@ class _MyHomePageState extends State<MyHomePage> {
           onTap: () {
             Navigator.of(context).pop();
             Navigator.of(context).push(MaterialPageRoute(builder: (context) => const OrderHistory()));
+          },
+        ),
+        ListTile(
+          title: const Text('Preferences'),
+          //         Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
+          onTap: () async {
+            Navigator.of(context).pop();
+            final val = await Navigator.of(context).push(MaterialPageRoute(builder: (context) => const WelcomePage()));
+            print("Returned from Welcome");
+            setState(() {
+              user = AviabarBackend().currentUser;
+            });
           },
         ),
         ListTile(
@@ -154,18 +168,18 @@ class _MyHomePageState extends State<MyHomePage> {
               Column(
                 children: [
                   Container(
-                      height: 50,
                       width: 200,
                       alignment: Alignment.center,
                       child: Text(
                         "",
                         style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.cyan[300]),
                       )),
+                  SizedBox(height: 30),
                   ElevatedButton(
                     onPressed: AviabarBackend().isServerAvailable ? _login : null,
                     style: ElevatedButton.styleFrom(
-                      fixedSize: const Size(200, 200),
-                      shape: const CircleBorder(),
+                      fixedSize: const Size(160, 160),
+                      shape: CircleBorder(side: BorderSide(color: Colors.cyan, width: 5)),
                       primary: Colors.cyan[300],
                     ),
                     child: Text("Login", style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
@@ -176,17 +190,28 @@ class _MyHomePageState extends State<MyHomePage> {
               Column(
                 children: [
                   Container(
-                      height: 50,
-                      width: 200,
+                      width: 250,
                       alignment: Alignment.center,
-                      child: Text(
-                        "Hello, ${user.name}",
+                      child: RichText(
+                          text: TextSpan(
                         style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.cyan[900]),
-                      )),
+                        children: [
+                          TextSpan(
+                            text: "Hi ",
+                          ),
+                          TextSpan(text: "${user.name}", style: TextStyle(color: Colors.cyan[700])),
+                          TextSpan(
+                            text: ", let's have a drink.",
+                          ),
+                        ],
+                      ))),
+                  SizedBox(height: 30),
                   ElevatedButton(
                     onPressed: _order,
                     style: ElevatedButton.styleFrom(
-                        fixedSize: const Size(200, 200), shape: const CircleBorder(), primary: Colors.cyan[900]),
+                        fixedSize: const Size(160, 160),
+                        shape: const CircleBorder(side: BorderSide(color: Color(0xFF0097A7), width: 5)),
+                        primary: Colors.cyan[900]),
                     child: Text(
                       "Order",
                       style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
@@ -246,8 +271,8 @@ class _MyHomePageState extends State<MyHomePage> {
   * */
   void _login() async {
     if (simCard) {
-      print("Sim. user 12345");
-      String cardId = "12345";
+      print("Sim. user 12349");
+      String cardId = "123439";
       _handleCard(cardId);
     } else {
       _readNFC();
@@ -256,7 +281,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _logout() {
     removeUserFromPreferences();
-    this.user = AviabarUser.empty();
+    AviabarBackend().logout();
   }
 
   /* for a given card ID, load the AVIABAR user
@@ -268,11 +293,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
       AviabarUser newuser = await AviabarBackend().getUser(cardId);
 
-      print(newuser.name);
-      if (newuser != null) {
+      if (newuser.isRegistered) {
         setState(() {
-          user = newuser;
+          AviabarBackend().currentUser = newuser;
         });
+      } else {
+        final val = await Navigator.push(context, MaterialPageRoute(builder: (context) => const WelcomePage()));
+        setState(() {});
       }
     }
     return;
@@ -282,12 +309,10 @@ class _MyHomePageState extends State<MyHomePage> {
    * forward to the product list
    */
   void _order() {
-    if (user != null) {
-      if (user.isRegistered) {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
-      } else {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const WelcomePage()));
-      }
+    print("Order: ${AviabarBackend().currentUser}");
+
+    if (AviabarBackend().currentUser.isRegistered) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
     }
     return;
   }

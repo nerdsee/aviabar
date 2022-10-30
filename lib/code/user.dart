@@ -26,4 +26,11 @@ class AviabarUser {
     var user = AviabarUser(json['id'], json['username'], json['balance'], json['cardId'], json['registered']);
     return user;
   }
+
+  @override
+  String toString() {
+    String rep = "AviabarUser($id)(name=$name, isRegistered=$isRegistered, isValid=$isValid)";
+    return rep;
+  }
+
 }
