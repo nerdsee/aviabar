@@ -185,9 +185,7 @@ class AviabarBackend {
 
     print("Found Card: $cardId");
 
-    if (cardId != null) {
-      currentUser = await AviabarBackend().getUser(cardId);
-    }
+    currentUser = await AviabarBackend().getUser(cardId);
   }
 
   Future<void> removeUserFromPreferences() async {

@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:typed_data';
 
 import 'package:aviabar/code/backend.dart';
@@ -10,7 +9,6 @@ import 'package:nfc_manager/platform_tags.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'code/user.dart';
-import 'package:http/http.dart' as http;
 
 import 'orderhistory.dart';
 
@@ -132,7 +130,7 @@ class _MyHomePageState extends State<MyHomePage> {
           //         Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
           onTap: () async {
             Navigator.of(context).pop();
-            final val = await Navigator.of(context).push(MaterialPageRoute(builder: (context) => const WelcomePage()));
+            await Navigator.of(context).push(MaterialPageRoute(builder: (context) => const WelcomePage()));
             print("Returned from Welcome");
             setState(() {
               user = AviabarBackend().currentUser;
@@ -222,7 +220,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           TextSpan(
                             text: "Hi ",
                           ),
-                          TextSpan(text: "${user.name}", style: TextStyle(color: Colors.cyan[700])),
+                          TextSpan(text: user.name, style: TextStyle(color: Colors.cyan[700])),
                           TextSpan(
                             text: ", let's have a drink.",
                           ),
@@ -313,7 +311,7 @@ class _MyHomePageState extends State<MyHomePage> {
           AviabarBackend().currentUser = newuser;
         });
       } else {
-        final val = await Navigator.push(context, MaterialPageRoute(builder: (context) => const WelcomePage()));
+        await Navigator.push(context, MaterialPageRoute(builder: (context) => const WelcomePage()));
         setState(() {});
       }
     }
@@ -339,7 +337,7 @@ class _MyHomePageState extends State<MyHomePage> {
     bool isAvailable = await NfcManager.instance.isAvailable();
     // Start Session
     if (isAvailable) {
-      print("nfc: " + NfcManager.instance.toString());
+      print("nfc: ${NfcManager.instance.toString()}");
 
       NfcManager.instance.startSession(onDiscovered: (NfcTag tag) async {
         NfcManager.instance.stopSession();
@@ -369,7 +367,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if (iso != null) {
       cardId = "";
       var id = iso.identifier;
-      Uint8List data8 = new Uint8List.fromList(id);
+      Uint8List data8 = Uint8List.fromList(id);
       for (int i in data8) {
         cardId = "$cardId${i.toRadixString(16)}";
       }

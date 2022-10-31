@@ -1,12 +1,9 @@
 import 'package:aviabar/code/backend.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:grouped_list/grouped_list.dart';
 
 import 'code/order.dart';
-import 'code/product.dart';
-import 'code/user.dart';
 import 'package:intl/intl.dart';
 
 class OrderHistory extends StatefulWidget {
@@ -17,7 +14,6 @@ class OrderHistory extends StatefulWidget {
 }
 
 class _OrderHistoryState extends State<OrderHistory> {
-  late List<Slidable> _items;
   late final mainActions;
   late final secondaryActions;
 
@@ -114,7 +110,4 @@ class _OrderHistoryState extends State<OrderHistory> {
     return itemlist;
   }
 
-  void _buy(AviabarProduct product) {
-    AviabarBackend().doBuy(product, context);
-  }
 }

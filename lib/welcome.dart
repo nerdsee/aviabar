@@ -1,7 +1,6 @@
 import 'package:aviabar/code/backend.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({Key? key}) : super(key: key);
@@ -27,7 +26,7 @@ class _WelcomePageState extends State<WelcomePage> {
         title: const Text("AVIABAR"),
       ),
       body: Container(
-        padding: new EdgeInsets.all(20.0),
+        padding: EdgeInsets.all(20.0),
         child: Form(
           key: _formKey,
           child: Column(children: [
@@ -63,9 +62,9 @@ class _WelcomePageState extends State<WelcomePage> {
                 if (value == null || value.isEmpty) {
                   return 'Please enter your email address';
                 }
-                if (value != null) {
-                  final bool isValid = EmailValidator.validate(value);
-                  if (!isValid) return 'Please enter a valid email address';
+                final bool isValid = EmailValidator.validate(value);
+                if (!isValid) {
+                  return 'Please enter a valid email address';
                 }
                 return null;
               },
