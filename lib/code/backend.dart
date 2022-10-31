@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:aviabar/code/ppresponse.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:aviabar/code/user.dart';
@@ -228,5 +229,9 @@ class AviabarBackend {
   void logout() {
     removeUserFromPreferences();
     currentUser = AviabarUser.empty();
+  }
+
+  void rechargeUser(PPResponse response) {
+    print("Recharge: ${currentUser.name} with ${response.amount}");
   }
 }
