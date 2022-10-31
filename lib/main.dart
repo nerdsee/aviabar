@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:aviabar/code/backend.dart';
 import 'package:aviabar/list.dart';
+import 'package:aviabar/recharge.dart';
 import 'package:aviabar/welcome.dart';
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
@@ -13,8 +14,8 @@ import 'code/user.dart';
 import 'orderhistory.dart';
 
 void main() {
-  AviabarBackend();
   runApp(const MyApp());
+  AviabarBackend();
 }
 
 class MyApp extends StatelessWidget {
@@ -120,7 +121,13 @@ class _MyHomePageState extends State<MyHomePage> {
           minLeadingWidth: 10,
           title: const Text('Recharge', style: TextStyle(fontSize: 20)),
           //         Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
-          onTap: () {
+          onTap: () async {
+            Navigator.of(context).pop();
+            await Navigator.of(context).push(MaterialPageRoute(builder: (context) => const RechargePage()));
+            print("Returned from Recharge");
+            setState(() {
+              user = AviabarBackend().currentUser;
+            });
           },
         ),
         ListTile(
