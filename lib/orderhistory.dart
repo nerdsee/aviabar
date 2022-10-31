@@ -44,7 +44,7 @@ class _OrderHistoryState extends State<OrderHistory> {
                           style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.cyan[700])))
                 ],
               );
-            } else
+            } else {
               return GroupedListView<AviabarOrder, String>(
                 // elements: [...getItemList(snapshot.data)],
                 elements: orderList,
@@ -79,6 +79,7 @@ class _OrderHistoryState extends State<OrderHistory> {
                   );
                 },
               );
+            }
           } else {
             return Center(child: const CircularProgressIndicator());
           }

@@ -77,7 +77,7 @@ class AviabarBackend {
 
   Future<AviabarUser> saveUserPreferencesDirect(String username, String email) async {
     print("Store Preferences (${currentUser.id}): $username");
-    http.Response response = await http.put(Uri.parse('${serverRoot}/user/${currentUser.id}/$username'));
+    http.Response response = await http.put(Uri.parse('$serverRoot/user/${currentUser.id}/$username'));
 
     if (response.statusCode == 200) {
       var jsonUser = jsonDecode(response.body);
@@ -121,28 +121,27 @@ class AviabarBackend {
   Future<List<AviabarOrder>> getOrders() async {
     List<AviabarOrder> aviabarOrders = [];
 
-    if (currentUser != null) {
-      http.Response response = await http.get(Uri.parse('$serverRoot/orders/${currentUser.id}'));
+    http.Response response = await http.get(Uri.parse('$serverRoot/orders/${currentUser.id}'));
 
-      if (response.statusCode == 200) {
-        var jsonOrderList = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      var jsonOrderList = jsonDecode(response.body);
 
-        print("Read Orders JSON: $jsonOrderList");
+      print("Read Orders JSON: $jsonOrderList");
 
-        var p2 = List.from(jsonOrderList);
+      var p2 = List.from(jsonOrderList);
 
-        print("P2: $p2");
+      print("P2: $p2");
 
-        p2.forEach((element) {
-          print("Element: ${element}");
-          aviabarOrders.add(AviabarOrder.fromJson(element));
-        });
+      p2.forEach((element) {
+        print("Element: $element");
+        aviabarOrders.add(AviabarOrder.fromJson(element));
+      });
 
-        print("Orders: ${aviabarOrders.length}");
-      } else {
-        throw Exception('Failed to load orders');
-      }
+      print("Orders: ${aviabarOrders.length}");
+    } else {
+      throw Exception('Failed to load orders');
     }
+
     return aviabarOrders;
   }
 
@@ -156,7 +155,6 @@ class AviabarBackend {
       // print(jsonProductList["products"]);
 
       currentUser.reduceBalance(product.price);
-
     } else {
       throw Exception('Something went wrong. Please try again.');
     }
@@ -185,7 +183,7 @@ class AviabarBackend {
 
     final cardId = prefs.getString('aviabar_cardid') ?? "";
 
-    print("Found Card: ${cardId}");
+    print("Found Card: $cardId");
 
     if (cardId != null) {
       currentUser = await AviabarBackend().getUser(cardId);
@@ -199,7 +197,7 @@ class AviabarBackend {
 
   Future<void> checkServerAvailability() async {
     print("Check server availability");
-    final client = new HttpClient();
+    final client = HttpClient();
     client.connectionTimeout = const Duration(seconds: 5);
     Future<http.Response> response = http.get(Uri.parse('$serverRoot/products'));
     response.then(serverFound).catchError((error, stackTrace) => serverTimeout).timeout(const Duration(seconds: 10));
@@ -226,7 +224,7 @@ class AviabarBackend {
   }
 
   serverTimeout(error, stackTrace) {
-    print("ERROR: ${error}");
+    print("ERROR: $error");
   }
 
   void logout() {

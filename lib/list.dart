@@ -26,9 +26,9 @@ class _ProductListState extends State<ProductList> {
         title: const Text("AVIABAR"),
         actions: [
           Container(
-            padding: EdgeInsets.fromLTRB(0, 10, 20, 10),
+            padding: const EdgeInsets.fromLTRB(0, 10, 20, 10),
             child: Container(
-              padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
               alignment: Alignment.center,
               decoration: BoxDecoration(color: user.balance < 0 ? Colors.red[900] : Colors.green, borderRadius: BorderRadius.all(Radius.circular(10))),
               child: Text(user.getReadableBalance(),style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),

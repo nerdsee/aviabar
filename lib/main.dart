@@ -78,10 +78,10 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     print("Backend is available ${AviabarBackend().isServerAvailable}");
-    print("Error is visible ${showServerError}");
+    print("Error is visible $showServerError");
 
     AviabarUser user = AviabarBackend().currentUser;
-    print("User ${user}");
+    print("User $user");
 
     var drawerHeader = DrawerHeader(
         decoration: BoxDecoration(
@@ -108,7 +108,7 @@ class _MyHomePageState extends State<MyHomePage> {
       children: <Widget>[
         drawerHeader,
         ListTile(
-          leading: Icon(Icons.history),
+          leading: const Icon(Icons.history),
           minLeadingWidth: 10,
           title: const Text('Purchase History', style: TextStyle(fontSize: 20)),
           //         Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
@@ -118,7 +118,7 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         ),
         ListTile(
-          leading: Icon(Icons.euro),
+          leading: const Icon(Icons.euro),
           minLeadingWidth: 10,
           title: const Text('Recharge', style: TextStyle(fontSize: 20)),
           //         Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
@@ -126,7 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         ),
         ListTile(
-          leading: Icon(Icons.settings),
+          leading: const Icon(Icons.settings),
           minLeadingWidth: 10,
           title: const Text('Preferences', style: TextStyle(fontSize: 20)),
           //         Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
@@ -371,9 +371,9 @@ class _MyHomePageState extends State<MyHomePage> {
       var id = iso.identifier;
       Uint8List data8 = new Uint8List.fromList(id);
       for (int i in data8) {
-        cardId = "${cardId}${i.toRadixString(16)}";
+        cardId = "$cardId${i.toRadixString(16)}";
       }
-      print("Found CardId: ${cardId}");
+      print("Found CardId: $cardId");
     } else {
       String msg = "Unsupported Cars: ${data.keys.toString()}";
       AviabarBackend().snackMessage(context, msg, Colors.red, 2);

@@ -31,7 +31,7 @@ class _WelcomePageState extends State<WelcomePage> {
         child: Form(
           key: _formKey,
           child: Column(children: [
-            Text("Welcome Stranger"),
+            const Text("Welcome Stranger"),
             TextFormField(
               initialValue: name,
               onChanged: (value) {

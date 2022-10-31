@@ -7,9 +7,9 @@ class AviabarOrder {
   late AviabarProduct product;
 
   AviabarOrder.empty() {
-    this.id = 0;
-    this.orderDate = DateTime.now();
-    this.product = new AviabarProduct.empty();
+    id = 0;
+    orderDate = DateTime.now();
+    product = AviabarProduct.empty();
   }
 
   AviabarOrder(this.id, this.orderDate, this.product);
