@@ -15,6 +15,7 @@ import 'package:http/http.dart' as http;
 import 'orderhistory.dart';
 
 void main() {
+  AviabarBackend();
   runApp(const MyApp());
 }
 
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'AVIABAR',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.blueGrey,
       ),
       home: const MyHomePage(title: 'AVIABAR'),
     );
@@ -82,8 +83,6 @@ class _MyHomePageState extends State<MyHomePage> {
     AviabarUser user = AviabarBackend().currentUser;
     print("User ${user}");
 
-    if (!user.isValid) loadUserFromPreferences();
-
     var drawerHeader = DrawerHeader(
         decoration: BoxDecoration(
           color: Colors.cyan[900],
@@ -94,10 +93,14 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             CircleAvatar(
               backgroundColor: Colors.white,
-              child: FlutterLogo(size: 42.0),
+              minRadius: 30,
+              child: FlutterLogo(size: 30.0),
             ),
             SizedBox(height: 20),
-            Text(user.name, style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white)),
+            FittedBox(
+                fit: BoxFit.fitWidth,
+                child: Text(user.name.length == 0 ? "*" : user.name,
+                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white))),
           ],
         ));
 
@@ -105,7 +108,9 @@ class _MyHomePageState extends State<MyHomePage> {
       children: <Widget>[
         drawerHeader,
         ListTile(
-          title: const Text('Purchase History'),
+          leading: Icon(Icons.history),
+          minLeadingWidth: 10,
+          title: const Text('Purchase History', style: TextStyle(fontSize: 20)),
           //         Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
           onTap: () {
             Navigator.of(context).pop();
@@ -113,7 +118,17 @@ class _MyHomePageState extends State<MyHomePage> {
           },
         ),
         ListTile(
-          title: const Text('Preferences'),
+          leading: Icon(Icons.euro),
+          minLeadingWidth: 10,
+          title: const Text('Recharge', style: TextStyle(fontSize: 20)),
+          //         Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
+          onTap: () {
+          },
+        ),
+        ListTile(
+          leading: Icon(Icons.settings),
+          minLeadingWidth: 10,
+          title: const Text('Preferences', style: TextStyle(fontSize: 20)),
           //         Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
           onTap: () async {
             Navigator.of(context).pop();
@@ -124,8 +139,16 @@ class _MyHomePageState extends State<MyHomePage> {
             });
           },
         ),
+        Divider(
+          color: Colors.grey,
+          thickness: 2,
+          indent: 10,
+          endIndent: 10,
+        ),
         ListTile(
-          title: const Text('Sign Out'),
+          leading: Icon(Icons.logout),
+          minLeadingWidth: 10,
+          title: const Text('Sign Out', style: TextStyle(fontSize: 20)),
           onTap: () {
             Navigator.of(context).pop();
             setState(() {
@@ -164,7 +187,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Text("Retry", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 )
               ]),
-            if (!user.isValid)
+            if (!user.isRegistered)
               Column(
                 children: [
                   Container(
@@ -186,13 +209,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ],
               ),
-            if (user.isValid)
+            if (user.isRegistered)
               Column(
                 children: [
                   Container(
                       width: 250,
                       alignment: Alignment.center,
-                      child: RichText(
+                      child: RichText(textAlign: TextAlign.center,
                           text: TextSpan(
                         style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.cyan[900]),
                         children: [
@@ -217,6 +240,21 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                     ),
                   ),
+                  SizedBox(height: 30),
+                  Container(
+                      width: 250,
+                      alignment: Alignment.center,
+                      child: RichText(textAlign: TextAlign.center,
+                          text: TextSpan(
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.cyan[900]),
+                            children: [
+                              TextSpan(
+                                text: "Your balance is ",
+                              ),
+                              TextSpan(text: "${user.getReadableBalance()} EUR", style: TextStyle(color: user.balance < 0 ? Colors.red[900] : Colors.cyan[700])),
+                            ],
+                          ))),
+
                 ],
               ),
             Switch(
@@ -232,34 +270,12 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      endDrawer: user.isValid
+      endDrawer: user.isRegistered
           ? Drawer(
-              child: user.isValid ? drawerItems : null,
+              child: user.isRegistered ? drawerItems : null,
             )
           : null,
     );
-  }
-
-  /*
-  * Preference Handling
-  *
-  * */
-
-  Future<void> loadUserFromPreferences() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final cardId = prefs.getString('aviabar_cardid') ?? "";
-
-    print("Found Card: ${cardId}");
-
-    if (cardId != "") {
-      _handleCard(cardId);
-    }
-  }
-
-  Future<void> removeUserFromPreferences() async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.remove('aviabar_cardid');
   }
 
   /*
@@ -271,8 +287,8 @@ class _MyHomePageState extends State<MyHomePage> {
   * */
   void _login() async {
     if (simCard) {
-      print("Sim. user 12349");
-      String cardId = "123439";
+      print("Sim. user 12345");
+      String cardId = "12345";
       _handleCard(cardId);
     } else {
       _readNFC();
@@ -280,7 +296,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _logout() {
-    removeUserFromPreferences();
     AviabarBackend().logout();
   }
 
@@ -308,11 +323,14 @@ class _MyHomePageState extends State<MyHomePage> {
   /**
    * forward to the product list
    */
-  void _order() {
+  void _order() async {
     print("Order: ${AviabarBackend().currentUser}");
 
     if (AviabarBackend().currentUser.isRegistered) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
+      await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
+      setState(() {
+
+      });
     }
     return;
   }

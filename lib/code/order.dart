@@ -17,16 +17,22 @@ class AviabarOrder {
   factory AviabarOrder.fromJson(Map<String, dynamic> json) {
     var product = AviabarProduct.fromJson(json['product']);
     print("Product: $product");
+    print("0");
+    print("JSON $json");
+    print("OD ${json['orderDate']}");
 
-    String dateTimeString = json['orderDate'];
+    var dateTimeString = json['orderDate'];
+    print("1");
     DateTime orderDate = DateTime.parse(dateTimeString);
+    print("2");
 
     var order = AviabarOrder(json['id'], orderDate, product);
+    print("3");
     return order;
   }
 
   String getFormattedDate() {
-    return DateFormat('dd.MM.yyyy – kk:mm').format(orderDate);
+    return DateFormat('dd.MM.yyyy').format(orderDate);
   }
 
 }

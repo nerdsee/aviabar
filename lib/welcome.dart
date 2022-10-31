@@ -15,7 +15,7 @@ class _WelcomePageState extends State<WelcomePage> {
   late final secondaryActions;
 
   String? name = AviabarBackend().currentUser.name;
-  String? email = "jan@stoevesand.org";
+  String? email = AviabarBackend().currentUser.email;
   bool somethingChanged = false;
 
   final _formKey = GlobalKey<FormState>();

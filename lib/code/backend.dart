@@ -4,20 +4,23 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:aviabar/code/user.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'order.dart';
 import 'product.dart';
 
 class AviabarBackend {
-  AviabarBackend._privateConstructor() {
-    serverRoot = "http://192.168.1.148:8080";
-
-    fAviabarProducts = getProducts();
-  }
-
   static final AviabarBackend _instance = AviabarBackend._privateConstructor();
   String serverRoot = "";
   AviabarUser currentUser = AviabarUser.empty();
   bool isServerAvailable = false;
+
+  AviabarBackend._privateConstructor() {
+    serverRoot = "http://192.168.1.148:8080";
+
+    loadUserFromPreferences();
+
+    fAviabarProducts = getProducts();
+  }
 
   factory AviabarBackend() {
     return _instance;
@@ -50,6 +53,30 @@ class AviabarBackend {
 
   Future<AviabarUser> saveUserPreferences(String username, String email) async {
     print("Store Preferences (${currentUser.id}): $username");
+
+    currentUser.name = username;
+    currentUser.email = email;
+
+    var body = jsonEncode(currentUser);
+
+    http.Response response = await http.put(Uri.parse('${serverRoot}/user/${currentUser.id}'),
+        headers: {"Content-Type": "application/json"}, body: body);
+
+    if (response.statusCode == 200) {
+      var jsonUser = jsonDecode(response.body);
+
+      print("Read JSON: $jsonUser");
+
+      currentUser = AviabarUser.fromJson(jsonUser);
+      // print("P2 $user");
+    } else {
+      throw Exception('Failed to load user (${response.statusCode})');
+    }
+    return currentUser;
+  }
+
+  Future<AviabarUser> saveUserPreferencesDirect(String username, String email) async {
+    print("Store Preferences (${currentUser.id}): $username");
     http.Response response = await http.put(Uri.parse('${serverRoot}/user/${currentUser.id}/$username'));
 
     if (response.statusCode == 200) {
@@ -79,11 +106,13 @@ class AviabarBackend {
 
       var p2 = List.from(jsonProductList);
 
+      aviabarProducts.clear();
+
       p2.forEach((element) {
         aviabarProducts.add(AviabarProduct.fromJson(element));
       });
     } else {
-      throw Exception('Failed to load album');
+      throw Exception('Failed to load product list');
     }
 
     return aviabarProducts;
@@ -98,7 +127,7 @@ class AviabarBackend {
       if (response.statusCode == 200) {
         var jsonOrderList = jsonDecode(response.body);
 
-        print("Read JSON: $jsonOrderList");
+        print("Read Orders JSON: $jsonOrderList");
 
         var p2 = List.from(jsonOrderList);
 
@@ -117,33 +146,55 @@ class AviabarBackend {
     return aviabarOrders;
   }
 
-  Future<void> buyProduct(AviabarUser user, AviabarProduct product) async {
-    http.Response response = await http.get(Uri.parse('${serverRoot}/order/${user.id}/${product.id}'));
+  Future<void> buyProduct(AviabarProduct product) async {
+    http.Response response = await http.get(Uri.parse('${serverRoot}/order/${currentUser.id}/${product.id}'));
 
     if (response.statusCode == 200) {
       var jsonProductList = jsonDecode(response.body);
 
-      print("Read JSON: $jsonProductList");
+      print("Read buyProduct JSON: $jsonProductList");
       // print(jsonProductList["products"]);
 
+      currentUser.reduceBalance(product.price);
+
     } else {
-      throw Exception('Failed to load album');
+      throw Exception('Something went wrong. Please try again.');
     }
 
     return;
   }
 
-  void doBuy(AviabarProduct product, BuildContext context) {
-    AviabarUser? currentUser = AviabarBackend().currentUser;
+  Future<void> doBuy(AviabarProduct product, BuildContext context) async {
+    AviabarUser currentUser = AviabarBackend().currentUser;
     String message = '';
-    if (currentUser != null) {
-      buyProduct(currentUser, product);
-      message = 'Buy ${product.name} ${product.id} ${currentUser.name}';
-    } else {
-      message = 'No Current User';
-    }
+    var ret = await buyProduct(product);
+    message = 'Buy ${product.name} ${product.id} ${currentUser.name}';
 
     snackMessage(context, message, Colors.green, 1);
+
+    return ret;
+  }
+
+  /*
+  * Preference Handling
+  *
+  * */
+
+  Future<void> loadUserFromPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final cardId = prefs.getString('aviabar_cardid') ?? "";
+
+    print("Found Card: ${cardId}");
+
+    if (cardId != null) {
+      currentUser = await AviabarBackend().getUser(cardId);
+    }
+  }
+
+  Future<void> removeUserFromPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.remove('aviabar_cardid');
   }
 
   Future<void> checkServerAvailability() async {
@@ -179,6 +230,7 @@ class AviabarBackend {
   }
 
   void logout() {
+    removeUserFromPreferences();
     currentUser = AviabarUser.empty();
   }
 }

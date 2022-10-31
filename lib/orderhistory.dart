@@ -30,40 +30,55 @@ class _OrderHistoryState extends State<OrderHistory> {
       body: FutureBuilder(
         builder: (context, AsyncSnapshot<List<AviabarOrder>> snapshot) {
           if (snapshot.hasData) {
-            return GroupedListView<AviabarOrder, String>(
-              // elements: [...getItemList(snapshot.data)],
-              elements: snapshot.data as List<AviabarOrder>,
-              groupBy: (order) => order.getFormattedDate(),
-              groupComparator: (value1, value2) => value2.compareTo(value1),
-              groupSeparatorBuilder: (String value) => Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  value,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
-              itemBuilder: (c, order) {
-                return Card(
-                  elevation: 8.0,
-                  margin: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-                  child: SizedBox(
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                      leading: ExtendedImage.network(
-                        '${AviabarBackend().serverRoot}/logos/${order.product.logo}',
-                        // cache: true, (by default caches image)
-                        shape: BoxShape.rectangle,
-                        width: 40,
-                        height: 40,
-                        borderRadius: const BorderRadius.all(Radius.circular(3.0)),
-                      ),
-                      title: Text(order.product.name),
-                    ),
+            var orderList = snapshot.data as List<AviabarOrder>;
+            if (orderList.length == 0) {
+              return Column(
+                children: [
+                  Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 100, 20, 0),
+                      child: Text("So far, you didn't order anything.",
+                          style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.cyan[900]))),
+                  Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Text("It is definitely time for a drink.",
+                          style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.cyan[700])))
+                ],
+              );
+            } else
+              return GroupedListView<AviabarOrder, String>(
+                // elements: [...getItemList(snapshot.data)],
+                elements: orderList,
+                groupBy: (order) => order.getFormattedDate(),
+                groupComparator: (value1, value2) => value2.compareTo(value1),
+                groupSeparatorBuilder: (String value) => Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    value,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                );
-              },
-            );
+                ),
+                itemBuilder: (c, order) {
+                  return Card(
+                    elevation: 8.0,
+                    margin: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                    child: SizedBox(
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                        leading: ExtendedImage.network(
+                          '${AviabarBackend().serverRoot}/logos/${order.product.logo}',
+                          // cache: true, (by default caches image)
+                          shape: BoxShape.rectangle,
+                          width: 40,
+                          height: 40,
+                          borderRadius: const BorderRadius.all(Radius.circular(3.0)),
+                        ),
+                        title: Text(order.product.name),
+                      ),
+                    ),
+                  );
+                },
+              );
           } else {
             return Center(child: const CircularProgressIndicator());
           }

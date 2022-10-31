@@ -20,9 +20,21 @@ class _ProductListState extends State<ProductList> {
 
   @override
   Widget build(BuildContext context) {
+    var user = AviabarBackend().currentUser;
     return Scaffold(
       appBar: AppBar(
         title: const Text("AVIABAR"),
+        actions: [
+          Container(
+            padding: EdgeInsets.fromLTRB(0, 10, 20, 10),
+            child: Container(
+              padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: user.balance < 0 ? Colors.red[900] : Colors.green, borderRadius: BorderRadius.all(Radius.circular(10))),
+              child: Text(user.getReadableBalance(),style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
+            ),
+          )
+        ],
       ),
       body: FutureBuilder(
         builder: (context, AsyncSnapshot<List<AviabarProduct>> snapshot) {
@@ -32,7 +44,7 @@ class _ProductListState extends State<ProductList> {
             return Center(child: const CircularProgressIndicator());
           }
         },
-        future: AviabarBackend().fAviabarProducts,
+        future: AviabarBackend().getProducts(),
       ),
     );
   }
@@ -91,8 +103,10 @@ class _ProductListState extends State<ProductList> {
     return itemlist;
   }
 
-  void _buy(AviabarProduct product) {
-    AviabarBackend().doBuy(product, context);
-  }
+  void _buy(AviabarProduct product) async {
+    await AviabarBackend().doBuy(product, context);
+    setState(() {
 
+    });
+  }
 }
