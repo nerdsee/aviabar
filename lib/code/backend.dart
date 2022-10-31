@@ -32,7 +32,7 @@ class AviabarBackend {
   void getIDCard() {}
 
   Future<AviabarUser> getUser(cardId) async {
-    http.Response response = await http.get(Uri.parse('${serverRoot}/card/${cardId}'));
+    http.Response response = await http.get(Uri.parse('$serverRoot/card/$cardId'));
 
     AviabarUser user;
 
@@ -59,7 +59,7 @@ class AviabarBackend {
 
     var body = jsonEncode(currentUser);
 
-    http.Response response = await http.put(Uri.parse('${serverRoot}/user/${currentUser.id}'),
+    http.Response response = await http.put(Uri.parse('$serverRoot/user/${currentUser.id}'),
         headers: {"Content-Type": "application/json"}, body: body);
 
     if (response.statusCode == 200) {
@@ -97,7 +97,7 @@ class AviabarBackend {
   }
 
   Future<List<AviabarProduct>> getProducts() async {
-    http.Response response = await http.get(Uri.parse('${serverRoot}/products'));
+    http.Response response = await http.get(Uri.parse('$serverRoot/products'));
 
     if (response.statusCode == 200) {
       var jsonProductList = jsonDecode(response.body);
@@ -122,7 +122,7 @@ class AviabarBackend {
     List<AviabarOrder> aviabarOrders = [];
 
     if (currentUser != null) {
-      http.Response response = await http.get(Uri.parse('${serverRoot}/orders/${currentUser.id}'));
+      http.Response response = await http.get(Uri.parse('$serverRoot/orders/${currentUser.id}'));
 
       if (response.statusCode == 200) {
         var jsonOrderList = jsonDecode(response.body);
@@ -147,7 +147,7 @@ class AviabarBackend {
   }
 
   Future<void> buyProduct(AviabarProduct product) async {
-    http.Response response = await http.get(Uri.parse('${serverRoot}/order/${currentUser.id}/${product.id}'));
+    http.Response response = await http.get(Uri.parse('$serverRoot/order/${currentUser.id}/${product.id}'));
 
     if (response.statusCode == 200) {
       var jsonProductList = jsonDecode(response.body);
@@ -201,7 +201,7 @@ class AviabarBackend {
     print("Check server availability");
     final client = new HttpClient();
     client.connectionTimeout = const Duration(seconds: 5);
-    Future<http.Response> response = http.get(Uri.parse('${serverRoot}/products'));
+    Future<http.Response> response = http.get(Uri.parse('$serverRoot/products'));
     response.then(serverFound).catchError((error, stackTrace) => serverTimeout).timeout(const Duration(seconds: 10));
     return;
   }
