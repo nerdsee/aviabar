@@ -83,18 +83,19 @@ class _ProductListState extends State<ProductList> {
                 ),
               ],
             ),
-            child: ListTile(
+            child: Card(child: ListTile(
               leading: ExtendedImage.network(
-                '${AviabarBackend().serverRoot}/logos/${product.logo}',
+                '${AviabarBackend().serverRoot}/logos/${product.logo}.png',
                 // cache: true, (by default caches image)
                 shape: BoxShape.rectangle,
                 width: 40,
                 height: 40,
                 borderRadius: const BorderRadius.all(Radius.circular(3.0)),
               ),
-              title: Text(product.name),
-              subtitle: const Text('Swipe left and right to see the actions'),
-            ),
+              title: Text(product.name.length == 0 ? "*" : product.name,
+                      style: TextStyle(fontSize: 20, color: Colors.black)),
+              // subtitle: const Text('Swipe left and right to see the actions'),
+            )),
           ),
       ];
     }
