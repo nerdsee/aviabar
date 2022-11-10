@@ -1,3 +1,6 @@
+import 'package:aviabar/code/token.dart';
+import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 class AviabarUser {
@@ -7,6 +10,8 @@ class AviabarUser {
   double balance = 0;
   String cardId = "";
   bool isRegistered = false;
+  String _token = "";
+  late AviabarToken _jwtToken;
 
   AviabarUser.empty() {
     this.name = "";
@@ -49,4 +54,18 @@ class AviabarUser {
   void reduceBalance(double price) {
     balance = balance - price;
   }
+
+  void setToken(String strToken) async {
+    _token = strToken;
+    _jwtToken = await AviabarToken.createToken(strToken);
+  }
+
+  AviabarToken getToken() {
+    return _jwtToken;
+  }
+
+  String getTokenString() {
+    return _token;
+  }
+
 }

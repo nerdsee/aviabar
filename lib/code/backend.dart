@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:aviabar/code/device.dart';
 import 'package:aviabar/code/ppresponse.dart';
+import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:aviabar/code/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -33,23 +36,68 @@ class AviabarBackend {
   void getIDCard() {}
 
   Future<AviabarUser> getUser(cardId) async {
-    http.Response response = await http.get(Uri.parse('$serverRoot/card/$cardId'));
+
+    Uri url = Uri.parse('$serverRoot/card/$cardId/device/123');
+    print("URL: $url");
+    http.Response response = await http.get(url);
 
     AviabarUser user;
+
+    Device device = Device();
+    await device.initPlatformState();
+    //device.print_devicedata();
+
+    String identifier = device.getIdentifier();
 
     if (response.statusCode == 200) {
       var jsonUser = jsonDecode(response.body);
 
       print("Read JSON: $jsonUser");
-
       user = AviabarUser.fromJson(jsonUser);
+
+      print("Headers (${response.headers.keys})");
+
+      String? token = response.headers["avi_token"];
+
+      if (token != null) {
+        print("Token: $token");
+
+        validateToken(token);
+        user.setToken(token);
+
+        currentUser = user;
+        return currentUser;
+      } else {
+        print("No Token found");
+        throw Exception('No valid token found');
+      }
       // print("P2 $user");
     } else {
       throw Exception('Failed to load user');
     }
+  }
 
-    currentUser = user;
-    return user;
+  void validateToken(String token) async {
+    /* Verify */
+    try {
+      // Verify a token
+
+      var f = await rootBundle.loadString('assets/public_key.pem');
+
+      // final pem = File('./keys/public_key.pem').readAsStringSync();
+      final key = RSAPublicKey(f);
+
+      final jwt = JWT.verify(token, key, issuer: "aviabar");
+      print('Payload: ${jwt.payload}');
+      print('Subject: ${jwt.subject}');
+      print('Issuer: ${jwt.issuer}');
+    } on JWTExpiredError catch (ex) {
+      print('jwt expired');
+      throw ex;
+    } on JWTError catch (ex) {
+      print("Invalid Token: ${ex.message}"); // ex: invalid signature
+      throw ex;
+    }
   }
 
   Future<AviabarUser> saveUserPreferences(String username, String email) async {
@@ -146,32 +194,36 @@ class AviabarBackend {
     return aviabarOrders;
   }
 
-  Future<void> buyProduct(AviabarProduct product) async {
-    http.Response response = await http.get(Uri.parse('$serverRoot/order/${currentUser.id}/${product.id}'));
-
-    if (response.statusCode == 200) {
-      var jsonProductList = jsonDecode(response.body);
-
-      print("Read buyProduct JSON: $jsonProductList");
-      // print(jsonProductList["products"]);
-
-      currentUser.reduceBalance(product.price);
-    } else {
-      throw Exception('Something went wrong. Please try again.');
-    }
-
-    return;
-  }
-
   Future<void> doBuy(AviabarProduct product, BuildContext context) async {
     AviabarUser currentUser = AviabarBackend().currentUser;
     String message = '';
-    var ret = await buyProduct(product);
-    message = 'Buy ${product.name} ${product.id} ${currentUser.name}';
 
-    snackMessage(context, message, Colors.green, 1);
+    print("Order token: ${currentUser.getTokenString()}");
 
-    return ret;
+    http.Response response = await http.get(
+      Uri.parse('$serverRoot/order/${currentUser.id}/${product.id}'),
+      headers: {
+        'avi_token': currentUser.getTokenString(),
+      },
+    );
+
+    if (response.statusCode == 200) {
+      var jsonOrder = jsonDecode(response.body);
+
+      print("Read order JSON: $jsonOrder");
+      // print(jsonProductList["products"]);
+
+      currentUser.reduceBalance(product.price);
+
+      message = 'You successfully bought ${product.name} ${product.id} ${currentUser.name}';
+      snackMessage(context, message, Colors.green, 1);
+    } else {
+      message = 'Unauthorized.';
+      snackMessage(context, message, Colors.red, 2);
+      // throw Exception('Unauthorized.');
+    }
+
+    return;
   }
 
   /*

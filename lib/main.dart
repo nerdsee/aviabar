@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:aviabar/code/backend.dart';
 import 'package:aviabar/list.dart';
 import 'package:aviabar/recharge.dart';
+import 'package:aviabar/security.dart';
 import 'package:aviabar/welcome.dart';
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
@@ -151,6 +152,19 @@ class _MyHomePageState extends State<MyHomePage> {
           endIndent: 10,
         ),
         ListTile(
+          leading: Icon(Icons.security),
+          minLeadingWidth: 10,
+          title: const Text('Security', style: TextStyle(fontSize: 20)),
+          onTap: () async {
+            Navigator.of(context).pop();
+            await Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SecurityPage()));
+            print("Returned from Security");
+            setState(() {
+              user = AviabarBackend().currentUser;
+            });
+          },
+        ),
+        ListTile(
           leading: Icon(Icons.logout),
           minLeadingWidth: 10,
           title: const Text('Sign Out', style: TextStyle(fontSize: 20)),
@@ -292,8 +306,8 @@ class _MyHomePageState extends State<MyHomePage> {
   * */
   void _login() async {
     if (simCard) {
-      print("Sim. user 12345");
-      String cardId = "12345";
+      String cardId = "123459922";
+      print("Sim. user $cardId");
       _handleCard(cardId);
     } else {
       _readNFC();
