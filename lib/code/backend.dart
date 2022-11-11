@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:aviabar/code/device.dart';
 import 'package:aviabar/code/ppresponse.dart';
+import 'package:aviabar/code/token.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,10 +17,13 @@ class AviabarBackend {
   static final AviabarBackend _instance = AviabarBackend._privateConstructor();
   String serverRoot = "";
   AviabarUser currentUser = AviabarUser.empty();
+  AviabarToken currentToken = AviabarToken.empty();
+
   bool isServerAvailable = false;
 
   AviabarBackend._privateConstructor() {
-    serverRoot = "http://www.notonto.de:8080";
+    serverRoot = "http://192.168.1.148:8080";
+    // serverRoot = "http://www.notonto.de:8080";
 
     loadUserFromPreferences();
 
@@ -66,6 +70,8 @@ class AviabarBackend {
         user.setToken(token);
 
         currentUser = user;
+        currentToken = await AviabarToken.createToken(token);
+
         return currentUser;
       } else {
         print("No Token found");
@@ -112,12 +118,11 @@ class AviabarBackend {
         headers: {"Content-Type": "application/json"}, body: body);
 
     if (response.statusCode == 200) {
+      print("User updated.");
+
       var jsonUser = jsonDecode(response.body);
-
       print("Read JSON: $jsonUser");
-
       currentUser = AviabarUser.fromJson(jsonUser);
-      // print("P2 $user");
     } else {
       throw Exception('Failed to load user (${response.statusCode})');
     }
@@ -198,12 +203,12 @@ class AviabarBackend {
     AviabarUser currentUser = AviabarBackend().currentUser;
     String message = '';
 
-    print("Order token: ${currentUser.getTokenString()}");
+    print("Order token: ${currentToken.getTokenString()}");
 
     http.Response response = await http.get(
       Uri.parse('$serverRoot/order/${currentUser.id}/${product.id}'),
       headers: {
-        'avi_token': currentUser.getTokenString(),
+        'avi_token': currentToken.getTokenString(),
       },
     );
 

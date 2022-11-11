@@ -306,7 +306,7 @@ class _MyHomePageState extends State<MyHomePage> {
   * */
   void _login() async {
     if (simCard) {
-      String cardId = "123459922";
+      String cardId = "1234tewrgst9927562";
       print("Sim. user $cardId");
       _handleCard(cardId);
     } else {

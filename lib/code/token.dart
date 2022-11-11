@@ -30,4 +30,6 @@ class AviabarToken {
     return _strToken;
   }
 
+  AviabarToken.empty() {}
+
 }

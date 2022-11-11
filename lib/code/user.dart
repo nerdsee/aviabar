@@ -64,7 +64,7 @@ class AviabarUser {
     return _jwtToken;
   }
 
-  String getTokenString() {
+  String getTokenString1() {
     return _token;
   }
 
