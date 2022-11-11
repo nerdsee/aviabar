@@ -19,7 +19,7 @@ class AviabarBackend {
   bool isServerAvailable = false;
 
   AviabarBackend._privateConstructor() {
-    serverRoot = "http://192.168.1.148:8080";
+    serverRoot = "http://www.notonto.de:8080";
 
     loadUserFromPreferences();
 

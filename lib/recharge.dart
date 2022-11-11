@@ -30,7 +30,7 @@ class _RechargePageState extends State<RechargePage> {
                 primary: Colors.cyan[700]),
             child: Text(
               "10 EUR",
-              style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
           SizedBox(height: 30),
@@ -44,7 +44,7 @@ class _RechargePageState extends State<RechargePage> {
                 primary: Colors.cyan[800]),
             child: Text(
               "20 EUR",
-              style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
           SizedBox(height: 30),
@@ -58,7 +58,7 @@ class _RechargePageState extends State<RechargePage> {
                 primary: Colors.cyan[900]),
             child: Text(
               "50 EUR",
-              style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
         ])));

@@ -325,11 +325,10 @@ class _MyHomePageState extends State<MyHomePage> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('aviabar_cardid', cardId);
 
-      AviabarUser newuser = await AviabarBackend().getUser(cardId);
+      await AviabarBackend().getUser(cardId);
 
-      if (newuser.isRegistered) {
+      if (AviabarBackend().currentUser.isRegistered) {
         setState(() {
-          AviabarBackend().currentUser = newuser;
         });
       } else {
         await Navigator.push(context, MaterialPageRoute(builder: (context) => const WelcomePage()));
