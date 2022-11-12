@@ -305,6 +305,10 @@ class _MyHomePageState extends State<MyHomePage> {
   * normally just forwards to NFC handling for new users
   * */
   void _login() async {
+
+    // reload the products if user logs in.
+    AviabarBackend().loadProducts();
+
     if (simCard) {
       String cardId = "1234tewrgst9927562";
       print("Sim. user $cardId");

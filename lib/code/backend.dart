@@ -16,26 +16,23 @@ import 'product.dart';
 class AviabarBackend {
   static final AviabarBackend _instance = AviabarBackend._privateConstructor();
   String serverRoot = "";
-  AviabarUser currentUser = AviabarUser.empty();
-  AviabarToken currentToken = AviabarToken.empty();
+  AviabarUser _currentUser = AviabarUser.empty();
+  AviabarToken _currentToken = AviabarToken.empty();
+  List<AviabarProduct> _currentProducts = [];
+  // late List<AviabarProduct> currentProducts;
 
   bool isServerAvailable = false;
 
   AviabarBackend._privateConstructor() {
     serverRoot = "http://192.168.1.148:8080";
     // serverRoot = "http://www.notonto.de:8080";
-
     loadUserFromPreferences();
-
-    fAviabarProducts = getProducts();
+    loadProducts();
   }
 
   factory AviabarBackend() {
     return _instance;
   }
-
-  List<AviabarProduct> aviabarProducts = [];
-  late Future<List<AviabarProduct>> fAviabarProducts;
 
   void getIDCard() {}
 
@@ -69,10 +66,10 @@ class AviabarBackend {
         validateToken(token);
         user.setToken(token);
 
-        currentUser = user;
-        currentToken = await AviabarToken.createToken(token);
+        _currentUser = user;
+        _currentToken = await AviabarToken.createToken(token);
 
-        return currentUser;
+        return _currentUser;
       } else {
         print("No Token found");
         throw Exception('No valid token found');
@@ -81,6 +78,14 @@ class AviabarBackend {
     } else {
       throw Exception('Failed to load user');
     }
+  }
+
+  AviabarUser get currentUser {
+    return _currentUser;
+  }
+
+  List<AviabarProduct> get currentProducts {
+    return _currentProducts;
   }
 
   void validateToken(String token) async {
@@ -107,14 +112,14 @@ class AviabarBackend {
   }
 
   Future<AviabarUser> saveUserPreferences(String username, String email) async {
-    print("Store Preferences (${currentUser.id}): $username");
+    print("Store Preferences (${_currentUser.id}): $username");
 
-    currentUser.name = username;
-    currentUser.email = email;
+    _currentUser.name = username;
+    _currentUser.email = email;
 
-    var body = jsonEncode(currentUser);
+    var body = jsonEncode(_currentUser);
 
-    http.Response response = await http.put(Uri.parse('$serverRoot/user/${currentUser.id}'),
+    http.Response response = await http.put(Uri.parse('$serverRoot/user/${_currentUser.id}'),
         headers: {"Content-Type": "application/json"}, body: body);
 
     if (response.statusCode == 200) {
@@ -122,60 +127,54 @@ class AviabarBackend {
 
       var jsonUser = jsonDecode(response.body);
       print("Read JSON: $jsonUser");
-      currentUser = AviabarUser.fromJson(jsonUser);
+      _currentUser = AviabarUser.fromJson(jsonUser);
     } else {
       throw Exception('Failed to load user (${response.statusCode})');
     }
-    return currentUser;
+    return _currentUser;
   }
 
   Future<AviabarUser> saveUserPreferencesDirect(String username, String email) async {
-    print("Store Preferences (${currentUser.id}): $username");
-    http.Response response = await http.put(Uri.parse('$serverRoot/user/${currentUser.id}/$username'));
+    print("Store Preferences (${_currentUser.id}): $username");
+    http.Response response = await http.put(Uri.parse('$serverRoot/user/${_currentUser.id}/$username'));
 
     if (response.statusCode == 200) {
       var jsonUser = jsonDecode(response.body);
 
       print("Read JSON: $jsonUser");
 
-      currentUser = AviabarUser.fromJson(jsonUser);
+      _currentUser = AviabarUser.fromJson(jsonUser);
       // print("P2 $user");
     } else {
       throw Exception('Failed to load user (${response.statusCode})');
     }
-    return currentUser;
+    return _currentUser;
   }
 
-  AviabarUser? getCurrentUser() {
-    return currentUser;
-  }
-
-  Future<List<AviabarProduct>> getProducts() async {
+  Future<void> loadProducts() async {
     http.Response response = await http.get(Uri.parse('$serverRoot/products'));
 
     if (response.statusCode == 200) {
       var jsonProductList = jsonDecode(response.body);
 
-      // print("Read JSON: $jsonProductList");
+      print("Read JSON products: $jsonProductList");
 
       var p2 = List.from(jsonProductList);
 
-      aviabarProducts.clear();
+      _currentProducts.clear();
 
       p2.forEach((element) {
-        aviabarProducts.add(AviabarProduct.fromJson(element));
+        _currentProducts.add(AviabarProduct.fromJson(element));
       });
     } else {
       throw Exception('Failed to load product list');
     }
-
-    return aviabarProducts;
   }
 
   Future<List<AviabarOrder>> getOrders() async {
     List<AviabarOrder> aviabarOrders = [];
 
-    http.Response response = await http.get(Uri.parse('$serverRoot/orders/${currentUser.id}'));
+    http.Response response = await http.get(Uri.parse('$serverRoot/orders/${_currentUser.id}'));
 
     if (response.statusCode == 200) {
       var jsonOrderList = jsonDecode(response.body);
@@ -200,15 +199,14 @@ class AviabarBackend {
   }
 
   Future<void> doBuy(AviabarProduct product, BuildContext context) async {
-    AviabarUser currentUser = AviabarBackend().currentUser;
     String message = '';
 
-    print("Order token: ${currentToken.getTokenString()}");
+    print("Order token: ${_currentToken.getTokenString()}");
 
     http.Response response = await http.get(
-      Uri.parse('$serverRoot/order/${currentUser.id}/${product.id}'),
+      Uri.parse('$serverRoot/order/${_currentUser.id}/${product.id}'),
       headers: {
-        'avi_token': currentToken.getTokenString(),
+        'avi_token': _currentToken.getTokenString(),
       },
     );
 
@@ -218,9 +216,9 @@ class AviabarBackend {
       print("Read order JSON: $jsonOrder");
       // print(jsonProductList["products"]);
 
-      currentUser.reduceBalance(product.price);
+      _currentUser.reduceBalance(product.price);
 
-      message = 'You successfully bought ${product.name} ${product.id} ${currentUser.name}';
+      message = 'You successfully bought ${product.name} ${product.id} ${_currentUser.name}';
       snackMessage(context, message, Colors.green, 1);
     } else {
       message = 'Unauthorized.';
@@ -243,7 +241,7 @@ class AviabarBackend {
 
     print("Found Card: $cardId");
 
-    currentUser = await AviabarBackend().getUser(cardId);
+    _currentUser = await AviabarBackend().getUser(cardId);
   }
 
   Future<void> removeUserFromPreferences() async {
@@ -285,10 +283,10 @@ class AviabarBackend {
 
   void logout() {
     removeUserFromPreferences();
-    currentUser = AviabarUser.empty();
+    _currentUser = AviabarUser.empty();
   }
 
   void rechargeUser(PPResponse response) {
-    print("Recharge: ${currentUser.name} with ${response.amount}");
+    print("Recharge: ${_currentUser.name} with ${response.amount}");
   }
 }
