@@ -15,16 +15,17 @@ import 'product.dart';
 
 class AviabarBackend {
   static final AviabarBackend _instance = AviabarBackend._privateConstructor();
-  String serverRoot = "";
+  String _serverRoot = "";
   AviabarUser _currentUser = AviabarUser.empty();
   AviabarToken _currentToken = AviabarToken.empty();
   List<AviabarProduct> _currentProducts = [];
+
   // late List<AviabarProduct> currentProducts;
 
   bool isServerAvailable = false;
 
   AviabarBackend._privateConstructor() {
-    serverRoot = "http://192.168.1.148:8080";
+    _serverRoot = "http://192.168.1.148:8080";
     // serverRoot = "http://www.notonto.de:8080";
     loadUserFromPreferences();
     loadProducts();
@@ -36,8 +37,19 @@ class AviabarBackend {
 
   void getIDCard() {}
 
-  Future<AviabarUser> getUser(cardId) async {
+  String get serverRoot {
+    return _serverRoot;
+  }
 
+  void setServer(bool testServer) {
+    if (testServer) {
+      _serverRoot = "http://192.168.1.148:8080";
+    } else {
+      _serverRoot = "http://www.notonto.de:8080";
+    }
+  }
+
+  Future<AviabarUser> getUser(cardId) async {
     Uri url = Uri.parse('$serverRoot/card/$cardId/device/123');
     print("URL: $url");
     http.Response response = await http.get(url);
@@ -58,16 +70,15 @@ class AviabarBackend {
 
       print("Headers (${response.headers.keys})");
 
-      String? token = response.headers["avi_token"];
+      String? tokenString = response.headers["avi_token"];
 
-      if (token != null) {
-        print("Token: $token");
+      if (tokenString != null) {
+        print("Token: $tokenString");
 
-        validateToken(token);
-        user.setToken(token);
+        validateToken(tokenString);
 
         _currentUser = user;
-        _currentToken = await AviabarToken.createToken(token);
+        _currentToken = await AviabarToken.createToken(tokenString);
 
         return _currentUser;
       } else {
@@ -82,6 +93,10 @@ class AviabarBackend {
 
   AviabarUser get currentUser {
     return _currentUser;
+  }
+
+  AviabarToken get currentToken {
+    return _currentToken;
   }
 
   List<AviabarProduct> get currentProducts {
@@ -171,6 +186,38 @@ class AviabarBackend {
     }
   }
 
+  Future<List<AviabarToken>> getUserToken() async {
+    print("Order token: ${_currentToken.tokenString}");
+
+    http.Response response = await http.get(
+      Uri.parse('$serverRoot/token/${_currentUser.id}'),
+      headers: {
+        'avi_token': _currentToken.tokenString,
+      },
+    );
+
+    List<AviabarToken> tokenList = [];
+
+    if (response.statusCode == 200) {
+      var jsonProductList = jsonDecode(response.body);
+
+      print("Read JSON products: $jsonProductList");
+
+      var p2 = List.from(jsonProductList);
+
+      print("P2: $p2");
+
+      for (var element in p2) {
+        AviabarToken at = await AviabarToken.fromJson(element);
+        tokenList.add(at);
+      }
+    } else {
+      throw Exception('Failed to load product list');
+    }
+
+    return tokenList;
+  }
+
   Future<List<AviabarOrder>> getOrders() async {
     List<AviabarOrder> aviabarOrders = [];
 
@@ -201,12 +248,12 @@ class AviabarBackend {
   Future<void> doBuy(AviabarProduct product, BuildContext context) async {
     String message = '';
 
-    print("Order token: ${_currentToken.getTokenString()}");
+    print("Order token: ${_currentToken.tokenString}");
 
     http.Response response = await http.get(
       Uri.parse('$serverRoot/order/${_currentUser.id}/${product.id}'),
       headers: {
-        'avi_token': _currentToken.getTokenString(),
+        'avi_token': _currentToken.tokenString,
       },
     );
 
@@ -218,8 +265,8 @@ class AviabarBackend {
 
       _currentUser.reduceBalance(product.price);
 
-      message = 'You successfully bought ${product.name} ${product.id} ${_currentUser.name}';
-      snackMessage(context, message, Colors.green, 1);
+      message = 'Enjoy your ${product.name} ';
+      snackMessage(context, message, Colors.green, 2);
     } else {
       message = 'Unauthorized.';
       snackMessage(context, message, Colors.red, 2);
@@ -286,7 +333,26 @@ class AviabarBackend {
     _currentUser = AviabarUser.empty();
   }
 
-  void rechargeUser(PPResponse response) {
-    print("Recharge: ${_currentUser.name} with ${response.amount}");
+  Future<AviabarUser> rechargeUser(PPResponse ppResponse) async {
+    print("Recharge: ${_currentUser.name} with ${ppResponse.amount}");
+
+    var body = jsonEncode(ppResponse);
+
+    String uri = '$serverRoot/recharge/${_currentUser.id}';
+    print("Recharge URI: $uri");
+
+    http.Response response = await http.put(Uri.parse(uri),
+        headers: {"Content-Type": "application/json", 'avi_token': _currentToken.tokenString}, body: body);
+
+    if (response.statusCode == 200) {
+      print("User recharged.");
+
+      var jsonUser = jsonDecode(response.body);
+      print("Read JSON: $jsonUser");
+      _currentUser = AviabarUser.fromJson(jsonUser);
+    } else {
+      throw Exception('Failed to load user (${response.statusCode})');
+    }
+    return _currentUser;
   }
 }

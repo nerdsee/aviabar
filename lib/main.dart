@@ -46,6 +46,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   bool simCard = true;
+  bool testServer = true;
   bool showServerError = false;
 
   serverStateChecked() {
@@ -226,6 +227,46 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     child: Text("Login", style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
                   ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("Simulate User"),
+                      Switch(
+                          // This bool value toggles the switch.
+                          value: simCard,
+                          activeColor: Colors.red,
+                          onChanged: (bool value) {
+                            // This is called when the user toggles the switch.
+                            setState(() {
+                              simCard = value;
+                            });
+                          })
+                    ],
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("Prod Server"),
+                      Switch(
+                          // This bool value toggles the switch.
+                          value: testServer,
+                          activeColor: Colors.red,
+                          onChanged: (bool value) {
+                            AviabarBackend().setServer(value);
+
+                            // This is called when the user toggles the switch.
+                            setState(() {
+                              testServer = value;
+                            });
+                          }),
+                      Text("Test Server"),
+                    ],
+                  ),
+                  Text("${AviabarBackend().serverRoot}"),
                 ],
               ),
             if (user.isRegistered)
@@ -234,19 +275,20 @@ class _MyHomePageState extends State<MyHomePage> {
                   Container(
                       width: 250,
                       alignment: Alignment.center,
-                      child: RichText(textAlign: TextAlign.center,
+                      child: RichText(
+                          textAlign: TextAlign.center,
                           text: TextSpan(
-                        style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.cyan[900]),
-                        children: [
-                          TextSpan(
-                            text: "Hi ",
-                          ),
-                          TextSpan(text: user.name, style: TextStyle(color: Colors.cyan[700])),
-                          TextSpan(
-                            text: ", let's have a drink.",
-                          ),
-                        ],
-                      ))),
+                            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.cyan[900]),
+                            children: [
+                              TextSpan(
+                                text: "Hi ",
+                              ),
+                              TextSpan(text: user.name, style: TextStyle(color: Colors.cyan[700])),
+                              TextSpan(
+                                text: ", let's have a drink.",
+                              ),
+                            ],
+                          ))),
                   SizedBox(height: 30),
                   ElevatedButton(
                     onPressed: _order,
@@ -263,29 +305,21 @@ class _MyHomePageState extends State<MyHomePage> {
                   Container(
                       width: 250,
                       alignment: Alignment.center,
-                      child: RichText(textAlign: TextAlign.center,
+                      child: RichText(
+                          textAlign: TextAlign.center,
                           text: TextSpan(
                             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.cyan[900]),
                             children: [
                               TextSpan(
                                 text: "Your balance is ",
                               ),
-                              TextSpan(text: "${user.getReadableBalance()} EUR", style: TextStyle(color: user.balance < 0 ? Colors.red[900] : Colors.cyan[700])),
+                              TextSpan(
+                                  text: "${user.getReadableBalance()} EUR",
+                                  style: TextStyle(color: user.balance < 0 ? Colors.red[900] : Colors.cyan[700])),
                             ],
                           ))),
-
                 ],
               ),
-            Switch(
-                // This bool value toggles the switch.
-                value: simCard,
-                activeColor: Colors.red,
-                onChanged: (bool value) {
-                  // This is called when the user toggles the switch.
-                  setState(() {
-                    simCard = value;
-                  });
-                })
           ],
         ),
       ),
@@ -305,7 +339,6 @@ class _MyHomePageState extends State<MyHomePage> {
   * normally just forwards to NFC handling for new users
   * */
   void _login() async {
-
     // reload the products if user logs in.
     AviabarBackend().loadProducts();
 
@@ -332,8 +365,7 @@ class _MyHomePageState extends State<MyHomePage> {
       await AviabarBackend().getUser(cardId);
 
       if (AviabarBackend().currentUser.isRegistered) {
-        setState(() {
-        });
+        setState(() {});
       } else {
         await Navigator.push(context, MaterialPageRoute(builder: (context) => const WelcomePage()));
         setState(() {});
@@ -350,9 +382,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (AviabarBackend().currentUser.isRegistered) {
       await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProductList()));
-      setState(() {
-
-      });
+      setState(() {});
     }
     return;
   }

@@ -62,7 +62,7 @@ class _OrderHistoryState extends State<OrderHistory> {
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                         leading: ExtendedImage.network(
-                          '${AviabarBackend().serverRoot}/logos/${order.product.logo}',
+                          '${AviabarBackend().serverRoot}/logos/${order.product.logo}.png',
                           // cache: true, (by default caches image)
                           shape: BoxShape.rectangle,
                           width: 40,

@@ -3,6 +3,7 @@ import 'package:badges/badges.dart';
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:intl/intl.dart';
 
 import 'code/product.dart';
 
@@ -98,11 +99,33 @@ class _ProductListState extends State<ProductList> {
               title: Text(product.name.length == 0 ? "*" : product.name,
                   style: TextStyle(fontSize: 20, color: Colors.black)),
               // subtitle: const Text('Swipe left and right to see the actions'),
+              trailing: Badge(
+                shape: BadgeShape.square,
+                borderRadius: BorderRadius.circular(8),
+                badgeContent: Text(
+                  "${getPrintableNumber(product.price)} €",
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                badgeColor: getPriceColor(product.price),
+              ),
             )),
           ),
       ];
     }
     return itemlist;
+  }
+
+  String getPrintableNumber(double amount) {
+    return NumberFormat("####0.00", "de_DE").format(amount);
+  }
+
+  Color getPriceColor(double amount) {
+    Color ret = Colors.cyan;
+    if (amount > 1)
+      ret = Colors.green[800] as Color;
+    if (amount > 2)
+      ret = Colors.amber[600] as Color;
+    return ret;
   }
 
   void _buy(AviabarProduct product) async {

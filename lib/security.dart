@@ -8,6 +8,8 @@ import 'package:grouped_list/grouped_list.dart';
 import 'code/order.dart';
 import 'package:intl/intl.dart';
 
+import 'code/token.dart';
+
 class SecurityPage extends StatefulWidget {
   const SecurityPage({Key? key}) : super(key: key);
 
@@ -31,28 +33,44 @@ class _SecurityPageState extends State<SecurityPage> {
         appBar: AppBar(
           title: const Text("Security"),
         ),
-        body: Container(
-          padding: const EdgeInsets.fromLTRB(10, 20, 10, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Tokens assigned to your ID Card",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.cyan[900])),
-              SizedBox(height: 5),
-              Expanded(
-                child: ListView(children: [
-                  Container(
-                      child: Card(
-                          child: Column(
-                    children: [
-                      Text("Issuer: ${AviabarBackend().currentUser.getToken().getIssuer()}"),
-                      Text("Token: ${AviabarBackend().currentUser.getToken().getTokenString()}"),
-                    ],
-                  )))
-                ]),
-              )
-            ],
-          ),
+        body: FutureBuilder<List<AviabarToken>>(
+          future: AviabarBackend().getUserToken(),
+          builder: (context, AsyncSnapshot<List<AviabarToken>> snapshot) {
+            if (snapshot.hasData) {
+              var tokenList = snapshot.data as List<AviabarToken>;
+
+              return GroupedListView<AviabarToken, String>(
+                // elements: [...getItemList(snapshot.data)],
+                elements: tokenList,
+                groupBy: (token) => token.valid ? "VALID" : "INVALID",
+                groupComparator: (value1, value2) => value2.compareTo(value1),
+                groupSeparatorBuilder: (String value) => Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    value,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                itemBuilder: (c, order) {
+                  return Card(
+                    elevation: 8.0,
+                    margin: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                    child: SizedBox(
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                        leading: Icon(Icons.security, color: order.valid ? Colors.green[900] : Colors.red[900],),
+                        title: Text("TOKEN"),
+                        subtitle: Text("Issuer: ${order.getIssuer()}"),
+                      ),
+                    ),
+                  );
+                },
+              );
+            } else {
+              return Center(child: const CircularProgressIndicator());
+            }
+          },
         ));
   }
 

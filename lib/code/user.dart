@@ -11,7 +11,7 @@ class AviabarUser {
   String cardId = "";
   bool isRegistered = false;
   String _token = "";
-  late AviabarToken _jwtToken;
+  // late AviabarToken _jwtToken;
 
   AviabarUser.empty() {
     this.name = "";
@@ -55,6 +55,7 @@ class AviabarUser {
     balance = balance - price;
   }
 
+/*
   void setToken(String strToken) async {
     _token = strToken;
     _jwtToken = await AviabarToken.createToken(strToken);
@@ -63,9 +64,6 @@ class AviabarUser {
   AviabarToken getToken() {
     return _jwtToken;
   }
-
-  String getTokenString1() {
-    return _token;
-  }
+*/
 
 }
